@@ -7,16 +7,17 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Events {
+public class Participant {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String titulo;
-    private String descricao;
-    private String data;
-    private String horario;
-    private String local;
-    private int maxParticipantes;
+    private String nome;
+    private String email;
+    private String telefone;
+
+    @ManyToOne
+    @JoinColumn(name = "evento_id")
+    private Events evento;
 }
