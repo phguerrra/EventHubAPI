@@ -26,6 +26,7 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
     private List<Participant> participants = new ArrayList<>();
 
+
     // GETTERS
 
     public Long getId() {
