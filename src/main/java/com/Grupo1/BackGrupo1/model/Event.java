@@ -1,5 +1,6 @@
 package com.grupo1.backgrupo1.model;
 
+import com.Grupo1.BackGrupo1.model.Participant;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
