@@ -1,6 +1,6 @@
 package com.Grupo1.BackGrupo1.controller;
 
-import com.Grupo1.BackGrupo1.model.Events;
+import com.Grupo1.BackGrupo1.model.Event;
 import com.Grupo1.BackGrupo1.service.EventsService;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,22 +17,22 @@ public class EventsController {
     }
 
     @GetMapping
-    public List<Events> listar() {
+    public List<Event> listar() {
         return service.listar();
     }
 
     @GetMapping("/{id}")
-    public Events buscar(@PathVariable Long id) {
+    public Event buscar(@PathVariable Long id) {
         return service.buscar(id);
     }
 
     @PostMapping
-    public Events criar(@RequestBody Events evento) {
+    public Event criar(@RequestBody Event evento) {
         return service.salvar(evento);
     }
 
     @PutMapping("/{id}")
-    public Events atualizar(@PathVariable Long id, @RequestBody Events evento) {
+    public Event atualizar(@PathVariable Long id, @RequestBody Event evento) {
         evento.setId(id);
         return service.salvar(evento);
     }

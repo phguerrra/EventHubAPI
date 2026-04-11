@@ -19,5 +19,5 @@ public class Participant {
 
     @ManyToOne
     @JoinColumn(name = "evento_id")
-    private Events evento;
+    private Event evento;
 }

@@ -1,6 +1,6 @@
 package com.Grupo1.BackGrupo1.service;
 
-import com.Grupo1.BackGrupo1.model.Events;
+import com.Grupo1.BackGrupo1.model.Event;
 import com.Grupo1.BackGrupo1.repository.EventsRepository;
 import org.springframework.stereotype.Service;
 
@@ -15,16 +15,16 @@ public class EventsService {
         this.repository = repository;
     }
 
-    public List<Events> listar() {
+    public List<Event> listar() {
         return repository.findAll();
     }
 
-    public Events buscar(Long id) {
+    public Event buscar(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Evento não encontrado"));
     }
 
-    public Events salvar(Events evento) {
+    public Event salvar(Event evento) {
         return repository.save(evento);
     }
 

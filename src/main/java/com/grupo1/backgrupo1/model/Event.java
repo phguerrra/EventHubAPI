@@ -1,6 +1,9 @@
-package com.grupo1.backgrupo1.model;
+package com.Grupo1.BackGrupo1.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -15,11 +18,22 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank
     private String title;
+
+    @NotBlank
     private String description;
+
+    @NotNull
     private LocalDate date;
+
+    @NotNull
     private LocalTime time;
+
+    @NotBlank
     private String location;
+
+    @Positive
     private int maxParticipants;
 
     @JsonManagedReference
@@ -60,6 +74,7 @@ public class Event {
         return participants;
     }
 
+    // SETTERS
 
     public void setId(Long id) {
         this.id = id;
