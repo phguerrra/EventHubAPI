@@ -1,5 +1,6 @@
 package com.Grupo1.BackGrupo1.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,6 +18,7 @@ public class Participant {
     private String email;
     private String phone;
 
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "event_id")
     private Event event;
