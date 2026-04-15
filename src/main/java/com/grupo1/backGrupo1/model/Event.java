@@ -23,7 +23,7 @@ public class Event {
     private int maxParticipants;
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL)
     private List<Participant> participants = new ArrayList<>();
 
 
