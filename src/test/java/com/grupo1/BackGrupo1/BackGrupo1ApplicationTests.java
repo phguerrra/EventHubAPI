@@ -1,4 +1,4 @@
-package com.Grupo1.BackGrupo1;
+package com.grupo1.BackGrupo1;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
