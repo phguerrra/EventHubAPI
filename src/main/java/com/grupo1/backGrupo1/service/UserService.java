@@ -5,6 +5,8 @@ import com.grupo1.backGrupo1.repository.UserRepository;
 import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.dto.UserDTO;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import java.time.LocalDate;
+import java.time.Period;
 
 @Service
 public class UserService {
@@ -23,11 +25,42 @@ public class UserService {
             throw new RuntimeException("Email já cadastrado");
         }
 
+        if (repo.existsByCpf(dto.getCpf())) {
+            throw new RuntimeException("CPF já cadastrado");
+        }
+
+        if (dto.getDataNascimento() == null) {
+            throw new RuntimeException("Data de nascimento é obrigatória");
+        }
+
+        if (dto.getDataNascimento().isAfter(LocalDate.now())) {
+            throw new RuntimeException("Data de nascimento inválida");
+        }
+
         User u = new User();
         u.setName(dto.getName());
         u.setEmail(dto.getEmail());
         u.setPassword(encoder.encode(dto.getPassword()));
+        u.setCpf(dto.getCpf());
+        u.setDataNascimento(dto.getDataNascimento());
 
         return repo.save(u);
+    }
+
+
+    public boolean isMaiorDeIdade(User user) {
+        return Period.between(user.getDataNascimento(), LocalDate.now()).getYears() >= 18;
+    }
+
+
+    public boolean isMaiorDeIdadeById(Long userId) {
+        User user = repo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        return isMaiorDeIdade(user);
+    }
+
+
+    public int calcularIdade(User user) {
+        return Period.between(user.getDataNascimento(), LocalDate.now()).getYears();
     }
 }

@@ -1,6 +1,7 @@
 package com.grupo1.backGrupo1.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 
 @Entity
 public class User {
@@ -15,6 +16,11 @@ public class User {
     private String email;
 
     private String password;
+
+    @Column(unique = true)
+    private String cpf;
+
+    private LocalDate dataNascimento;
 
     public Long getId() {
         return id;
@@ -42,5 +48,21 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getCpf() {
+        return cpf;
+    }
+
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
+    }
+
+    public LocalDate getDataNascimento() {
+        return dataNascimento;
+    }
+
+    public void setDataNascimento(LocalDate dataNascimento) {
+        this.dataNascimento = dataNascimento;
     }
 }

@@ -21,6 +21,7 @@ public class Event {
     private LocalTime time;
     private String location;
     private int maxParticipants;
+    private boolean maioridade18;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL)
@@ -61,6 +62,10 @@ public class Event {
         return participants;
     }
 
+    public boolean isMaioridade18() {
+        return maioridade18;
+    }
+
 
     public void setId(Long id) {
         this.id = id;
@@ -92,5 +97,9 @@ public class Event {
 
     public void setParticipants(List<Participant> participants) {
         this.participants = participants;
+    }
+
+    public void setMaioridade18(boolean maioridade18) {
+        this.maioridade18 = maioridade18;
     }
 }
