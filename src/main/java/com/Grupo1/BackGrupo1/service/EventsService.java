@@ -39,6 +39,11 @@ public class EventsService {
 
     public Participant cadastrarParticipante(Long eventId, Participant participant) {
         Event event = buscar(eventId);
+        String email = participant.getEmail();
+
+        if (email != null && participantRepository.existsByEventIdAndEmailIgnoreCase(eventId, email)) {
+            throw new RuntimeException("Participante jÃ¡ inscrito neste evento");
+        }
 
         List<Participant> participantes = participantRepository.findByEventId(eventId);
         if (participantes.size() >= event.getMaxParticipants()) {
