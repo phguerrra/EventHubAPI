@@ -1,6 +1,7 @@
 package com.Grupo1.BackGrupo1.controller;
 
 import com.Grupo1.BackGrupo1.model.Event;
+import com.Grupo1.BackGrupo1.model.Participant;
 import com.Grupo1.BackGrupo1.service.EventsService;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,5 +41,16 @@ public class EventsController {
     @DeleteMapping("/{id}")
     public void deletar(@PathVariable Long id) {
         service.deletar(id);
+    }
+
+    @PostMapping("/{id}/participants")
+    public Participant cadastrarParticipante(@PathVariable Long id, @RequestBody Participant participant) {
+        return service.cadastrarParticipante(id, participant);
+    }
+
+    @GetMapping("/{id}/participants")
+    public List<Participant> listarParticipantes(@PathVariable Long id) {
+        return service.listarParticipantes(id);
+
     }
 }

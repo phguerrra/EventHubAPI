@@ -13,11 +13,11 @@ public class Participant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nome;
+    private String name;
     private String email;
-    private String telefone;
+    private String phone;
 
     @ManyToOne
-    @JoinColumn(name = "evento_id")
-    private Event evento;
+    @JoinColumn(name = "event_id")
+    private Event event;
 }
