@@ -1,0 +1,106 @@
+{
+  "info": {
+    "name": "BackGrupo1 API - Test Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Coleção para testar endpoints básicos: users, events, participants",
+    "_postman_id": "backgrupo1-collection"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "eventId", "value": "1" },
+    { "key": "userId", "value": "1" },
+    { "key": "participantId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Create user",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@example.com\",\n  \"password\": \"senha123\",\n  \"cpf\": \"12345678901\",\n  \"dataNascimento\": \"1990-01-01\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/users/register", "host": ["{{baseUrl}}"], "path": ["users","register"] }
+      }
+    },
+    {
+      "name": "Create event",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Festa de Teste\",\n  \"description\": \"Evento para testes\",\n  \"date\": \"2026-05-01\",\n  \"time\": \"20:00:00\",\n  \"location\": \"Auditório\",\n  \"maxParticipants\": 100,\n  \"majority18\": false\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/events", "host": ["{{baseUrl}}"], "path": ["events"] }
+      }
+    },
+    {
+      "name": "List events",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/events", "host": ["{{baseUrl}}"], "path": ["events"] }
+      }
+    },
+    {
+      "name": "Get event by id",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["events","{{eventId}}"] }
+      }
+    },
+    {
+      "name": "Update event",
+      "request": {
+        "method": "PUT",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Festa Atualizada\",\n  \"description\": \"Descrição atualizada\",\n  \"date\": \"2026-05-02\",\n  \"time\": \"21:00:00\",\n  \"location\": \"Sala B\",\n  \"maxParticipants\": 50,\n  \"majority18\": true\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["events","{{eventId}}"] }
+      }
+    },
+    {
+      "name": "Delete event",
+      "request": {
+        "method": "DELETE",
+        "url": { "raw": "{{baseUrl}}/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["events","{{eventId}}"] }
+      }
+    },
+    {
+      "name": "List participants",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/events/{{eventId}}/participants", "host": ["{{baseUrl}}"], "path": ["events","{{eventId}}","participants"] }
+      }
+    },
+    {
+      "name": "Register participant",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Maria\",\n  \"email\": \"maria@example.com\",\n  \"phone\": \"11988887777\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/events/{{eventId}}/participants?userId={{userId}}", "host": ["{{baseUrl}}"], "path": ["events","{{eventId}}","participants"], "query": [ { "key": "userId", "value": "{{userId}}" } ] }
+      }
+    },
+    {
+      "name": "Delete participant",
+      "request": {
+        "method": "DELETE",
+        "url": { "raw": "{{baseUrl}}/events/{{eventId}}/participants/{{participantId}}", "host": ["{{baseUrl}}"], "path": ["events","{{eventId}}","participants","{{participantId}}"] }
+      }
+    },
+    {
+      "name": "Check email registered",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/events/{{eventId}}/participants/check-email?email=maria@example.com", "host": ["{{baseUrl}}"], "path": ["events","{{eventId}}","participants","check-email"], "query": [ { "key": "email", "value": "maria@example.com" } ] }
+      }
+    }
+  ]
+}
