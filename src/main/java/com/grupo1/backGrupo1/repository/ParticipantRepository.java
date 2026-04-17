@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ParticipantRepository extends JpaRepository<Participant, Long> {
-    List<Participant> findByEventoId(Long eventoId);
+    List<Participant> findByEventId(Long eventId);
     
-    Optional<Participant> findByEventoIdAndEmail(Long eventoId, String email);
+    Optional<Participant> findByEventIdAndEmail(Long eventId, String email);
     
-    boolean existsByEventoIdAndEmail(Long eventoId, String email);
+    boolean existsByEventIdAndEmail(Long eventId, String email);
 }

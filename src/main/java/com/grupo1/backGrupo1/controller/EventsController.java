@@ -17,28 +17,44 @@ public class EventsController {
     }
 
     @GetMapping
-    public List<Event> listar() {
-        return service.listar();
+    public List<Event> listAll() {
+        return service.listAll();
     }
 
     @GetMapping("/{id}")
-    public Event buscar(@PathVariable Long id) {
-        return service.buscar(id);
+    public Event getById(@PathVariable Long id) {
+        return service.getById(id);
     }
 
     @PostMapping
-    public Event criar(@RequestBody Event evento) {
-        return service.salvar(evento);
+    public Event create(@org.springframework.web.bind.annotation.RequestBody @jakarta.validation.Valid com.grupo1.backGrupo1.dto.EventDTO dto) {
+        com.grupo1.backGrupo1.model.Event event = new com.grupo1.backGrupo1.model.Event();
+        event.setTitle(dto.getTitle());
+        event.setDescription(dto.getDescription());
+        event.setDate(dto.getDate());
+        event.setTime(dto.getTime());
+        event.setLocation(dto.getLocation());
+        event.setMaxParticipants(dto.getMaxParticipants());
+        event.setMajority18(Boolean.TRUE.equals(dto.getMajority18()));
+        return service.saveEvent(event);
     }
 
     @PutMapping("/{id}")
-    public Event atualizar(@PathVariable Long id, @RequestBody Event evento) {
-        evento.setId(id);
-        return service.salvar(evento);
+    public Event update(@PathVariable Long id, @org.springframework.web.bind.annotation.RequestBody @jakarta.validation.Valid com.grupo1.backGrupo1.dto.EventDTO dto) {
+        com.grupo1.backGrupo1.model.Event event = new com.grupo1.backGrupo1.model.Event();
+        event.setId(id);
+        event.setTitle(dto.getTitle());
+        event.setDescription(dto.getDescription());
+        event.setDate(dto.getDate());
+        event.setTime(dto.getTime());
+        event.setLocation(dto.getLocation());
+        event.setMaxParticipants(dto.getMaxParticipants());
+        event.setMajority18(Boolean.TRUE.equals(dto.getMajority18()));
+        return service.saveEvent(event);
     }
 
     @DeleteMapping("/{id}")
-    public void deletar(@PathVariable Long id) {
-        service.deletar(id);
+    public void delete(@PathVariable Long id) {
+        service.deleteById(id);
     }
 }

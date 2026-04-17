@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/events/{eventoId}/participants")
+@RequestMapping("/events/{eventId}/participants")
 public class ParticipantController {
 
     private final ParticipantService service;
@@ -20,58 +20,42 @@ public class ParticipantController {
         this.service = service;
     }
 
-    /**
-     * GET - Lista todos os participantes de um evento
-     */
+    // get
     @GetMapping
-    public ResponseEntity<List<Participant>> listarParticipantes(@PathVariable Long eventoId) {
-        List<Participant> participants = service.listarParticipantesDoEvento(eventoId);
+    public ResponseEntity<List<Participant>> listParticipants(@PathVariable Long eventId) {
+        List<Participant> participants = service.listParticipantsForEvent(eventId);
         return ResponseEntity.ok(participants);
     }
 
-    /**
-     * POST - Inscreve um novo participante no evento
-     */
+    // post
     @PostMapping
-    public ResponseEntity<?> inscreverParticipante(
-            @PathVariable Long eventoId,
+    public ResponseEntity<?> registerParticipant(
+            @PathVariable Long eventId,
             @RequestParam Long userId,
-            @RequestBody Participant participant) {
-        try {
-            Participant novoParticipante = service.inscreverNoEvento(eventoId, participant, userId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(novoParticipante);
-        } catch (RuntimeException e) {
-            Map<String, String> erro = new HashMap<>();
-            erro.put("erro", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
-        }
+            @org.springframework.web.bind.annotation.RequestBody @jakarta.validation.Valid com.grupo1.backGrupo1.dto.ParticipantDTO dto) {
+        com.grupo1.backGrupo1.model.Participant participant = new com.grupo1.backGrupo1.model.Participant();
+        participant.setName(dto.getName());
+        participant.setEmail(dto.getEmail());
+        participant.setPhone(dto.getPhone());
+        com.grupo1.backGrupo1.model.Participant newParticipant = service.registerForEvent(eventId, participant, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newParticipant);
     }
 
-    /**
-     * DELETE - Remove um participante do evento
-     */
-    @DeleteMapping("/{participanteId}")
-    public ResponseEntity<?> removerParticipante(@PathVariable Long participanteId) {
-        try {
-            service.removerParticipante(participanteId);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            Map<String, String> erro = new HashMap<>();
-            erro.put("erro", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erro);
-        }
+    // Delete
+    @DeleteMapping("/{participantId}")
+    public ResponseEntity<?> removeParticipant(@PathVariable Long participantId) {
+        service.removeParticipantById(participantId);
+        return ResponseEntity.noContent().build();
     }
 
-    /**
-     * GET - Verifica se um email já está inscrito no evento
-     */
+    // get
     @GetMapping("/check-email")
-    public ResponseEntity<Map<String, Boolean>> verificarEmailInscrito(
-            @PathVariable Long eventoId,
+    public ResponseEntity<Map<String, Boolean>> checkEmailRegistered(
+            @PathVariable Long eventId,
             @RequestParam String email) {
-        boolean emailInscrito = service.emailJaInscrito(eventoId, email);
+        boolean emailRegistered = service.isEmailRegistered(eventId, email);
         Map<String, Boolean> resposta = new HashMap<>();
-        resposta.put("emailInscrito", emailInscrito);
+        resposta.put("emailInscrito", emailRegistered);
         return ResponseEntity.ok(resposta);
     }
 }
