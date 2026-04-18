@@ -19,5 +19,5 @@ public class Participant {
 
     @ManyToOne
     @JoinColumn(name = "evento_id")
-    private com.grupo1.backGrupo1.model.Event evento;
+    private Event evento;
 }

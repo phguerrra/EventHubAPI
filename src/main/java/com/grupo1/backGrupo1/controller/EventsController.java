@@ -41,4 +41,10 @@ public class EventsController {
     public void deletar(@PathVariable Long id) {
         service.deletar(id);
     }
+
+    @DeleteMapping("/{eventId}/participants/{participantId}")
+    public void cancelRegistration(@PathVariable Long eventId,
+                                   @PathVariable Long participantId) {
+        service.cancelRegistration(eventId, participantId);
+    }
 }
