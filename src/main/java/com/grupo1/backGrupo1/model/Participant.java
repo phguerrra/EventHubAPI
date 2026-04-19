@@ -7,18 +7,18 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"evento_id", "email"}))
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"event_id", "email"}))
 public class Participant {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nome;
+    private String name;
     private String email;
-    private String telefone;
+    private String phone;
 
     @ManyToOne
-    @JoinColumn(name = "evento_id")
-    private com.grupo1.backGrupo1.model.Event evento;
+    @JoinColumn(name = "event_id")
+    private com.grupo1.backGrupo1.model.Event event;
 }

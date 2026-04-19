@@ -1,7 +1,11 @@
 package com.grupo1.backGrupo1.dto;
 
+import lombok.Data;
+
 import java.time.LocalDate;
 
+
+@Data
 public class UserDTO {
 
     private String name;
@@ -10,31 +14,5 @@ public class UserDTO {
     private String cpf;
     private LocalDate dataNascimento;
 
-    public String getName() {
-        return name;
-    }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getCpf() {
-        return cpf;
-    }
-
-    public void setCpf(String cpf) {
-        this.cpf = cpf;
-    }
-
-    public LocalDate getDataNascimento() {
-        return dataNascimento;
-    }
-
-    public void setDataNascimento(LocalDate dataNascimento) {
-        this.dataNascimento = dataNascimento;
-    }
 }
