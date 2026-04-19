@@ -21,10 +21,10 @@ public class User {
 
     private String password;
 
+    private String role;
+
     @Column(unique = true)
     private String cpf;
 
     private LocalDate dataNascimento;
-
-
 }

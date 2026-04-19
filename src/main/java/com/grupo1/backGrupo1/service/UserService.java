@@ -4,7 +4,9 @@ import org.springframework.stereotype.Service;
 import com.grupo1.backGrupo1.repository.UserRepository;
 import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.dto.UserDTO;
+import com.grupo1.backGrupo1.exception.EntityNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 import java.time.LocalDate;
 import java.time.Period;
 
@@ -44,21 +46,27 @@ public class UserService {
         u.setCpf(dto.getCpf());
         u.setDataNascimento(dto.getDataNascimento());
 
+        // usuario criado pelo cadastro normal sera um usuario comum
+        u.setRole("USER");
+
         return repo.save(u);
     }
 
+    public User findById(Long userId) {
+        return repo.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com id: " + userId));
+    }
 
     public boolean isMaiorDeIdade(User user) {
         return Period.between(user.getDataNascimento(), LocalDate.now()).getYears() >= 18;
     }
 
-
     public boolean isMaiorDeIdadeById(Long userId) {
         User user = repo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
         return isMaiorDeIdade(user);
     }
-
 
     public int calcularIdade(User user) {
         return Period.between(user.getDataNascimento(), LocalDate.now()).getYears();

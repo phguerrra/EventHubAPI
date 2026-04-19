@@ -1,6 +1,7 @@
 package com.grupo1.backGrupo1.service;
 
 import com.grupo1.backGrupo1.exception.BusinessRuleException;
+import org.springframework.transaction.annotation.Transactional;
 import com.grupo1.backGrupo1.exception.EntityNotFoundException;
 import com.grupo1.backGrupo1.model.Event;
 import com.grupo1.backGrupo1.model.Participant;
@@ -26,9 +27,9 @@ public class ParticipantService {
         this.userRepository = userRepository;
     }
 
+    @Transactional
     public Participant registerForEvent(Long eventId, Participant participant, Long userId) {
 
-        // Verifica se o evento existe
         Event event = eventsRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Evento não encontrado com id: " + eventId));
 
@@ -36,15 +37,16 @@ public class ParticipantService {
             throw new BusinessRuleException("Este email já está inscrito no evento: " + event.getTitle());
         }
 
-        if (event.getParticipants().size() >= event.getMaxParticipants()) {
+        long totalInscritos = participantRepository.countByEventId(eventId);
+
+        if (totalInscritos >= event.getMaxParticipants()) {
             throw new BusinessRuleException("O evento atingiu o número máximo de participantes");
         }
 
-        // Se o evento é +18, verifica a maioridade do usuário
         if (event.isMajority18()) {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com id: " + userId));
-            
+
             int idade = Period.between(user.getDataNascimento(), LocalDate.now()).getYears();
             if (idade < 18) {
                 throw new BusinessRuleException("Este evento é restrito a maiores de 18 anos. O usuário tem " + idade + " anos");
