@@ -85,4 +85,10 @@ public class EventsController {
 
         service.deleteById(id);
     }
+
+    @DeleteMapping("/{eventId}/participants/{participantId}")
+    public void cancelRegistration(@PathVariable Long eventId,
+                                   @PathVariable Long participantId) {
+        service.cancelRegistration(eventId, participantId);
+    }
 }
