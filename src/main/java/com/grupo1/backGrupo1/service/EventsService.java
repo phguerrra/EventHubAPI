@@ -3,7 +3,9 @@ package com.grupo1.backGrupo1.service;
 import com.grupo1.backGrupo1.exception.BusinessRuleException;
 import com.grupo1.backGrupo1.exception.EntityNotFoundException;
 import com.grupo1.backGrupo1.model.Event;
+import com.grupo1.backGrupo1.model.Participant;
 import com.grupo1.backGrupo1.repository.EventsRepository;
+import com.grupo1.backGrupo1.repository.ParticipantRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,9 +14,11 @@ import java.util.List;
 public class EventsService {
 
     private final EventsRepository repository;
+    private final ParticipantRepository participantRepository;
 
-    public EventsService(EventsRepository repository) {
+    public EventsService(EventsRepository repository, ParticipantRepository participantRepository) {
         this.repository = repository;
+        this.participantRepository = participantRepository;
     }
 
     public List<Event> listAll() {
@@ -50,5 +54,18 @@ public class EventsService {
             throw new EntityNotFoundException("Evento não encontrado com id: " + id);
         }
         repository.deleteById(id);
+    }
+
+    public void cancelRegistration(Long eventId, Long participantId) {
+        Event event = repository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        Participant participant = participantRepository.findById(participantId)
+                .orElseThrow(() -> new RuntimeException("Participant not found"));
+
+        event.getParticipants().remove(participant);
+        participant.setEvent(null);
+
+        repository.save(event);
     }
 }
