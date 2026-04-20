@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import com.grupo1.backGrupo1.repository.UserRepository;
 import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.dto.UserDTO;
+import com.grupo1.backGrupo1.dto.LoginDTO;
 import com.grupo1.backGrupo1.exception.EntityNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -45,11 +46,20 @@ public class UserService {
         u.setPassword(encoder.encode(dto.getPassword()));
         u.setCpf(dto.getCpf());
         u.setDataNascimento(dto.getDataNascimento());
-
-        // usuario criado pelo cadastro normal sera um usuario comum
         u.setRole("USER");
 
         return repo.save(u);
+    }
+
+    public User login(LoginDTO dto) {
+        User user = repo.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new RuntimeException("Email ou senha inválidos"));
+
+        if (!encoder.matches(dto.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Email ou senha inválidos");
+        }
+
+        return user;
     }
 
     public User findById(Long userId) {
@@ -64,7 +74,6 @@ public class UserService {
     public boolean isMaiorDeIdadeById(Long userId) {
         User user = repo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
         return isMaiorDeIdade(user);
     }
 
