@@ -2,11 +2,9 @@ package com.grupo1.backGrupo1.controller;
 
 import com.grupo1.backGrupo1.dto.EventDTO;
 import com.grupo1.backGrupo1.exception.BusinessRuleException;
-import com.grupo1.backGrupo1.exception.EntityNotFoundException;
 import com.grupo1.backGrupo1.model.Event;
-import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.service.EventsService;
-import com.grupo1.backGrupo1.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,11 +15,9 @@ import java.util.List;
 public class EventsController {
 
     private final EventsService service;
-    private final UserService userService;
 
-    public EventsController(EventsService service, UserService userService) {
+    public EventsController(EventsService service) {
         this.service = service;
-        this.userService = userService;
     }
 
     @GetMapping
@@ -35,8 +31,9 @@ public class EventsController {
     }
 
     @PostMapping
-    @com.grupo1.backGrupo1.security.AdminOnly
-    public Event create(@RequestParam Long userId, @RequestBody @Valid EventDTO dto) {
+    public Event create(@RequestBody @Valid EventDTO dto, HttpSession session) {
+        validarAdmin(session);
+
         Event event = new Event();
         event.setTitle(dto.getTitle());
         event.setDescription(dto.getDescription());
@@ -50,8 +47,9 @@ public class EventsController {
     }
 
     @PutMapping("/{id}")
-    @com.grupo1.backGrupo1.security.AdminOnly
-    public Event update(@PathVariable Long id, @RequestParam Long userId, @RequestBody @Valid EventDTO dto) {
+    public Event update(@PathVariable Long id, @RequestBody @Valid EventDTO dto, HttpSession session) {
+        validarAdmin(session);
+
         Event event = new Event();
         event.setId(id);
         event.setTitle(dto.getTitle());
@@ -66,14 +64,21 @@ public class EventsController {
     }
 
     @DeleteMapping("/{id}")
-    @com.grupo1.backGrupo1.security.AdminOnly
-    public void delete(@PathVariable Long id, @RequestParam Long userId) {
+    public void delete(@PathVariable Long id, HttpSession session) {
+        validarAdmin(session);
         service.deleteById(id);
     }
 
-    @DeleteMapping("/{eventId}/participants/{participantId}/cancel")
-    public void cancelRegistration(@PathVariable Long eventId,
-                                   @PathVariable Long participantId) {
-        service.cancelRegistration(eventId, participantId);
+    private void validarAdmin(HttpSession session) {
+        Object userId = session.getAttribute("userId");
+        Object userRole = session.getAttribute("userRole");
+
+        if (userId == null) {
+            throw new BusinessRuleException("Usuário não está logado");
+        }
+
+        if (!"ADMIN".equals(userRole)) {
+            throw new BusinessRuleException("Apenas administradores podem realizar esta ação");
+        }
     }
 }
