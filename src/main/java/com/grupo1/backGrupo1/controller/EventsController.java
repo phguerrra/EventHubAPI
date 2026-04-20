@@ -35,13 +35,8 @@ public class EventsController {
     }
 
     @PostMapping
+    @com.grupo1.backGrupo1.security.AdminOnly
     public Event create(@RequestParam Long userId, @RequestBody @Valid EventDTO dto) {
-        User user = userService.findById(userId);
-
-        if (!"ADMIN".equals(user.getRole())) {
-            throw new BusinessRuleException("Apenas administradores podem criar eventos");
-        }
-
         Event event = new Event();
         event.setTitle(dto.getTitle());
         event.setDescription(dto.getDescription());
@@ -55,13 +50,8 @@ public class EventsController {
     }
 
     @PutMapping("/{id}")
+    @com.grupo1.backGrupo1.security.AdminOnly
     public Event update(@PathVariable Long id, @RequestParam Long userId, @RequestBody @Valid EventDTO dto) {
-        User user = userService.findById(userId);
-
-        if (!"ADMIN".equals(user.getRole())) {
-            throw new BusinessRuleException("Apenas administradores podem editar eventos");
-        }
-
         Event event = new Event();
         event.setId(id);
         event.setTitle(dto.getTitle());
@@ -76,13 +66,8 @@ public class EventsController {
     }
 
     @DeleteMapping("/{id}")
+    @com.grupo1.backGrupo1.security.AdminOnly
     public void delete(@PathVariable Long id, @RequestParam Long userId) {
-        User user = userService.findById(userId);
-
-        if (!"ADMIN".equals(user.getRole())) {
-            throw new BusinessRuleException("Apenas administradores podem excluir eventos");
-        }
-
         service.deleteById(id);
     }
 

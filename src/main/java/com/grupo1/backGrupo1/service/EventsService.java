@@ -64,7 +64,7 @@ public class EventsService {
                 .orElseThrow(() -> new RuntimeException("Participant not found"));
 
         event.getParticipants().remove(participant);
-        participant.setEvento(null);
+        participant.setEvent(null);
 
         repository.save(event);
     }
