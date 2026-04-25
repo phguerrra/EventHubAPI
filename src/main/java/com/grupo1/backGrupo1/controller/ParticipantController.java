@@ -37,6 +37,7 @@ public class ParticipantController {
         participant.setName(dto.getName());
         participant.setEmail(dto.getEmail());
         participant.setPhone(dto.getPhone());
+        participant.setCpf(dto.getCpf());
         com.grupo1.backGrupo1.model.Participant newParticipant = service.registerForEvent(eventId, participant, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(newParticipant);
     }

@@ -17,6 +17,7 @@ public class Participant {
     private String name;
     private String email;
     private String phone;
+    private String cpf;
 
     @ManyToOne
     @JoinColumn(name = "event_id")
