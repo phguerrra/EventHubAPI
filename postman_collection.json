@@ -13,7 +13,7 @@
   ],
   "item": [
     {
-      "name": "Create user",
+      "name": "Register user",
       "request": {
         "method": "POST",
         "header": [ { "key": "Content-Type", "value": "application/json" } ],
@@ -22,6 +22,32 @@
           "raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@example.com\",\n  \"password\": \"senha123\",\n  \"cpf\": \"12345678901\",\n  \"dataNascimento\": \"1990-01-01\"\n}"
         },
         "url": { "raw": "{{baseUrl}}/users/register", "host": ["{{baseUrl}}"], "path": ["users","register"] }
+      }
+    },
+    {
+      "name": "Login user",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"joao@example.com\",\n  \"password\": \"senha123\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/users/login", "host": ["{{baseUrl}}"], "path": ["users","login"] }
+      }
+    },
+    {
+      "name": "Get current user info",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users","me"] }
+      }
+    },
+    {
+      "name": "Logout user",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/users/logout", "host": ["{{baseUrl}}"], "path": ["users","logout"] }
       }
     },
     {

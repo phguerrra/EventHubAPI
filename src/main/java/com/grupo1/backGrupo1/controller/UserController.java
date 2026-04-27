@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.*;
 import com.grupo1.backGrupo1.service.UserService;
 import com.grupo1.backGrupo1.dto.UserDTO;
 import com.grupo1.backGrupo1.dto.LoginDTO;
+import com.grupo1.backGrupo1.dto.LoginResponseDTO;
 import com.grupo1.backGrupo1.model.User;
 
 import jakarta.servlet.http.HttpSession;
@@ -25,18 +26,21 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public Map<String, Object> login(@RequestBody LoginDTO dto, HttpSession session) {
+    public LoginResponseDTO login(@RequestBody LoginDTO dto, HttpSession session) {
         User user = service.login(dto);
+        
+        boolean isAdmin = service.isAdmin(user);
 
         session.setAttribute("userId", user.getId());
         session.setAttribute("userRole", user.getRole());
+        session.setAttribute("isAdmin", isAdmin);
 
-        return Map.of(
-                "message", "Login realizado com sucesso",
-                "userId", user.getId(),
-                "name", user.getName(),
-                "email", user.getEmail(),
-                "role", user.getRole()
+        return new LoginResponseDTO(
+                "Login realizado com sucesso",
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                isAdmin
         );
     }
 
@@ -50,6 +54,7 @@ public class UserController {
     public Map<String, Object> me(HttpSession session) {
         Object userId = session.getAttribute("userId");
         Object userRole = session.getAttribute("userRole");
+        Object isAdmin = session.getAttribute("isAdmin");
 
         if (userId == null) {
             throw new RuntimeException("Nenhum usuário logado");
@@ -57,7 +62,8 @@ public class UserController {
 
         return Map.of(
                 "userId", userId,
-                "role", userRole
+                "role", userRole,
+                "isAdmin", isAdmin != null ? isAdmin : false
         );
     }
 }

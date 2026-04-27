@@ -6,6 +6,7 @@ import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.dto.UserDTO;
 import com.grupo1.backGrupo1.dto.LoginDTO;
 import com.grupo1.backGrupo1.exception.EntityNotFoundException;
+import com.grupo1.backGrupo1.exception.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
@@ -52,11 +53,19 @@ public class UserService {
     }
 
     public User login(LoginDTO dto) {
+        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
+            throw new AuthenticationException("Email é obrigatório");
+        }
+
+        if (dto.getPassword() == null || dto.getPassword().isBlank()) {
+            throw new AuthenticationException("Senha é obrigatória");
+        }
+
         User user = repo.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("Email ou senha inválidos"));
+                .orElseThrow(() -> new AuthenticationException("Email ou senha inválidos"));
 
         if (!encoder.matches(dto.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Email ou senha inválidos");
+            throw new AuthenticationException("Email ou senha inválidos");
         }
 
         return user;
@@ -65,6 +74,19 @@ public class UserService {
     public User findById(Long userId) {
         return repo.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com id: " + userId));
+    }
+
+    public boolean isAdmin(Long userId) {
+        User user = findById(userId);
+        return isAdmin(user);
+    }
+
+    public boolean isAdmin(User user) {
+        return user != null && "ADMIN".equals(user.getRole());
+    }
+
+    public boolean isUser(User user) {
+        return user != null && "USER".equals(user.getRole());
     }
 
     public boolean isMaiorDeIdade(User user) {
