@@ -6,8 +6,6 @@ import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.dto.UserDTO;
 import com.grupo1.backGrupo1.dto.LoginDTO;
 import com.grupo1.backGrupo1.exception.EntityNotFoundException;
-import com.grupo1.backGrupo1.util.CpfValidator;
-import com.grupo1.backGrupo1.exception.BusinessRuleException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
@@ -26,19 +24,12 @@ public class UserService {
 
     public User register(UserDTO dto) {
 
-        System.out.println("CPF: " + dto.getCpf());
-        System.out.println("Email: " + dto.getEmail());
-
         if (repo.existsByEmail(dto.getEmail())) {
             throw new RuntimeException("Email já cadastrado");
         }
 
         if (repo.existsByCpf(dto.getCpf())) {
             throw new RuntimeException("CPF já cadastrado");
-        }
-
-        if (!CpfValidator.isValid(dto.getCpf())) {
-            throw new BusinessRuleException("CPF inválido");
         }
 
         if (dto.getDataNascimento() == null) {
