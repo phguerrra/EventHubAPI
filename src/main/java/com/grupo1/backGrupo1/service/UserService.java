@@ -7,6 +7,7 @@ import com.grupo1.backGrupo1.dto.UserDTO;
 import com.grupo1.backGrupo1.dto.LoginDTO;
 import com.grupo1.backGrupo1.exception.EntityNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.grupo1.backGrupo1.util.CpfValidator;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -32,6 +33,14 @@ public class UserService {
             throw new RuntimeException("CPF já cadastrado");
         }
 
+        if (dto.getCpf() == null || dto.getCpf().isBlank()) {
+            throw new RuntimeException("CPF é obrigatório");
+        }
+
+        if (!CpfValidator.isValid(dto.getCpf())) {
+            throw new RuntimeException("CPF inválido");
+        }
+
         if (dto.getDataNascimento() == null) {
             throw new RuntimeException("Data de nascimento é obrigatória");
         }
@@ -48,7 +57,12 @@ public class UserService {
         u.setDataNascimento(dto.getDataNascimento());
         u.setRole("USER");
 
-        return repo.save(u);
+        try {
+            return repo.save(u);
+        } catch (Exception e) {
+            e.printStackTrace(); // 👈 MOSTRA ERRO REAL
+            throw e;
+        }
     }
 
     public User login(LoginDTO dto) {
