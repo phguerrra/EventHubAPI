@@ -9,6 +9,7 @@ import com.grupo1.backGrupo1.dto.UserDTO;
 import com.grupo1.backGrupo1.dto.LoginDTO;
 import com.grupo1.backGrupo1.dto.LoginResponseDTO;
 import com.grupo1.backGrupo1.model.User;
+import com.grupo1.backGrupo1.security.JwtService;
 
 import jakarta.servlet.http.HttpSession;
 import java.util.Map;
@@ -18,9 +19,11 @@ import java.util.Map;
 public class UserController {
 
     private final UserService service;
+    private final JwtService jwtService;
 
-    public UserController(UserService service) {
+    public UserController(UserService service, JwtService jwtService) {
         this.service = service;
+        this.jwtService = jwtService;
     }
 
     // =========================
@@ -38,6 +41,7 @@ public class UserController {
     public ResponseEntity<?> login(@RequestBody LoginDTO dto, HttpSession session) {
         try {
             User user = service.login(dto);
+            String token = jwtService.generateToken(user);
 
             boolean isAdmin = service.isAdmin(user);
 
@@ -50,7 +54,8 @@ public class UserController {
                     user.getName(),
                     user.getEmail(),
                     user.getRole(),
-                    isAdmin
+                    isAdmin,
+                    token
             ));
 
         } catch (RuntimeException e) {
