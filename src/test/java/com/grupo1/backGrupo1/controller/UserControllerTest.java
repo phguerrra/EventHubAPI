@@ -2,6 +2,7 @@ package com.grupo1.backGrupo1.controller;
 
 import com.grupo1.backGrupo1.dto.LoginDTO;
 import com.grupo1.backGrupo1.model.User;
+import com.grupo1.backGrupo1.security.JwtService;
 import com.grupo1.backGrupo1.service.UserService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -18,9 +19,12 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {
@@ -29,19 +33,17 @@ class UserControllerTest {
 
     @Mock
     private UserService service;
+    @Mock
+    private JwtService jwtService;
 
     @BeforeEach
     void setup() {
-        UserController controller = new UserController(service);
+        UserController controller = new UserController(service, jwtService);
         this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
-    // =========================
-    // LOGIN - USUÁRIO COMUM
-    // =========================
     @Test
     void login_user_sets_session_and_returns_response() throws Exception {
-
         String requestJson = "{\"email\":\"user@example.com\",\"password\":\"secret\"}";
 
         User user = new User();
@@ -52,6 +54,7 @@ class UserControllerTest {
 
         when(service.login(any(LoginDTO.class))).thenReturn(user);
         when(service.isAdmin(user)).thenReturn(false);
+        when(jwtService.generateToken(user)).thenReturn("jwt-user-token");
 
         mockMvc.perform(post("/users/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -59,6 +62,7 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Login realizado com sucesso")))
                 .andExpect(content().string(containsString("Regular User")))
+                .andExpect(content().string(containsString("jwt-user-token")))
                 .andExpect(request().sessionAttribute("userId", user.getId()))
                 .andExpect(request().sessionAttribute("userRole", user.getRole()))
                 .andExpect(request().sessionAttribute("isAdmin", false));
@@ -69,14 +73,11 @@ class UserControllerTest {
         ));
 
         verify(service).isAdmin(user);
+        verify(jwtService).generateToken(user);
     }
 
-    // =========================
-    // LOGIN - ADMIN
-    // =========================
     @Test
     void login_admin_sets_isAdmin_true() throws Exception {
-
         String requestJson = "{\"email\":\"admin@example.com\",\"password\":\"adminpass\"}";
 
         User user = new User();
@@ -87,6 +88,7 @@ class UserControllerTest {
 
         when(service.login(any(LoginDTO.class))).thenReturn(user);
         when(service.isAdmin(user)).thenReturn(true);
+        when(jwtService.generateToken(user)).thenReturn("jwt-admin-token");
 
         mockMvc.perform(post("/users/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -94,18 +96,16 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Login realizado com sucesso")))
                 .andExpect(content().string(containsString("Admin")))
+                .andExpect(content().string(containsString("jwt-admin-token")))
                 .andExpect(request().sessionAttribute("isAdmin", true));
 
         verify(service).login(any(LoginDTO.class));
         verify(service).isAdmin(user);
+        verify(jwtService).generateToken(user);
     }
 
-    // =========================
-    // LOGIN INVÁLIDO
-    // =========================
     @Test
     void login_invalido_retorna_erro() throws Exception {
-
         String requestJson = "{\"email\":\"x\",\"password\":\"x\"}";
 
         when(service.login(any(LoginDTO.class)))
@@ -119,12 +119,8 @@ class UserControllerTest {
         verify(service).login(any(LoginDTO.class));
     }
 
-    // =========================
-    // SEGURANÇA - USER NÃO PODE ACESSAR ADMIN
-    // =========================
     @Test
     void usuario_comum_nao_pode_acessar_area_admin() throws Exception {
-
         mockMvc.perform(post("/users/admin/dashboard")
                         .sessionAttr("userId", 1L)
                         .sessionAttr("userRole", "USER")
@@ -133,12 +129,8 @@ class UserControllerTest {
                 .andExpect(content().string(containsString("Acesso negado")));
     }
 
-    // =========================
-    // SEGURANÇA - ADMIN PODE ACESSAR
-    // =========================
     @Test
     void admin_pode_acessar_area_admin() throws Exception {
-
         mockMvc.perform(post("/users/admin/dashboard")
                         .sessionAttr("userId", 2L)
                         .sessionAttr("userRole", "ADMIN")
