@@ -80,4 +80,8 @@ public class UserService {
     public int calcularIdade(User user) {
         return Period.between(user.getDataNascimento(), LocalDate.now()).getYears();
     }
+
+    public boolean isAdmin(User user) {
+        return user != null && "ADMIN".equals(user.getRole());
+    }
 }
