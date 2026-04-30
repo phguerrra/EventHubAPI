@@ -12,6 +12,7 @@ import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.security.JwtService;
 
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import java.util.Map;
 
 @RestController
@@ -28,14 +29,14 @@ public class UserController {
 
     // REGISTER
     @PostMapping("/register")
-    public User register(@RequestBody UserDTO dto) {
+    public User register(@RequestBody @Valid UserDTO dto) {
         return service.register(dto);
     }
 
 
     // LOGIN (COM TRATAMENTO DE ERRO)
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginDTO dto, HttpSession session) {
+    public ResponseEntity<?> login(@RequestBody @Valid LoginDTO dto, HttpSession session) {
         try {
             User user = service.login(dto);
             String token = jwtService.generateToken(user);
@@ -88,9 +89,7 @@ public class UserController {
         );
     }
 
-    // =========================
     // AREA ADMIN (NOVO)
-    // =========================
     @PostMapping("/admin/dashboard")
     public ResponseEntity<?> areaAdmin(HttpSession session) {
 

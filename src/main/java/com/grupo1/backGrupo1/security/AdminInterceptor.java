@@ -33,6 +33,14 @@ public class AdminInterceptor implements HandlerInterceptor {
             userIdStr = request.getParameter("userId");
         }
 
+        // fallback: check session (used by JwtAuthenticationFilter)
+        if (userIdStr == null || userIdStr.isBlank()) {
+            var session = request.getSession(false);
+            if (session != null && session.getAttribute("userId") != null) {
+                userIdStr = session.getAttribute("userId").toString();
+            }
+        }
+
         if (userIdStr == null || userIdStr.isBlank()) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Operação reservada a administradores: userId não fornecido");
             return false;
