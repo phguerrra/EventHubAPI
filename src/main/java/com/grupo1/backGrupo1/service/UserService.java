@@ -1,5 +1,6 @@
 package com.grupo1.backGrupo1.service;
 
+
 import org.springframework.stereotype.Service;
 import com.grupo1.backGrupo1.repository.UserRepository;
 import com.grupo1.backGrupo1.model.User;
@@ -53,6 +54,7 @@ public class UserService {
     }
 
     public User login(LoginDTO dto) {
+
         if (dto.getEmail() == null || dto.getEmail().isBlank()) {
             throw new AuthenticationException("Email é obrigatório");
         }
