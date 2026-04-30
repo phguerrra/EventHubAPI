@@ -26,17 +26,14 @@ public class UserController {
         this.jwtService = jwtService;
     }
 
-    // =========================
     // REGISTER
-    // =========================
     @PostMapping("/register")
     public User register(@RequestBody UserDTO dto) {
         return service.register(dto);
     }
 
-    // =========================
+
     // LOGIN (COM TRATAMENTO DE ERRO)
-    // =========================
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDTO dto, HttpSession session) {
         try {
@@ -65,18 +62,14 @@ public class UserController {
         }
     }
 
-    // =========================
     // LOGOUT
-    // =========================
     @PostMapping("/logout")
     public Map<String, String> logout(HttpSession session) {
         session.invalidate();
         return Map.of("message", "Logout realizado com sucesso");
     }
 
-    // =========================
     // USUÁRIO LOGADO
-    // =========================
     @GetMapping("/me")
     public Map<String, Object> me(HttpSession session) {
 
@@ -96,7 +89,7 @@ public class UserController {
     }
 
     // =========================
-    // 🔥 AREA ADMIN (NOVO)
+    // AREA ADMIN (NOVO)
     // =========================
     @PostMapping("/admin/dashboard")
     public ResponseEntity<?> areaAdmin(HttpSession session) {
