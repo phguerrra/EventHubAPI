@@ -9,6 +9,7 @@ import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.repository.EventsRepository;
 import com.grupo1.backGrupo1.repository.ParticipantRepository;
 import com.grupo1.backGrupo1.repository.UserRepository;
+import com.grupo1.backGrupo1.util.CpfValidator;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.Period;
@@ -51,6 +52,11 @@ public class ParticipantService {
             if (idade < 18) {
                 throw new BusinessRuleException("Este evento é restrito a maiores de 18 anos. O usuário tem " + idade + " anos");
             }
+        }
+        System.out.println("CPF recebido: " + participant.getCpf());
+
+        if (!CpfValidator.isValid(participant.getCpf())) {
+            throw new BusinessRuleException("CPF inválido");
         }
 
         participant.setEvent(event);

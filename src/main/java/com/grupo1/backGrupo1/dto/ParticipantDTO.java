@@ -16,5 +16,8 @@ public class ParticipantDTO {
 
     private String phone;
 
+    @NotBlank(message = "CPF é obrigatório")
+    private String cpf;
+
 
 }
