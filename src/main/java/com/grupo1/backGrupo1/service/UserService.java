@@ -1,13 +1,15 @@
 package com.grupo1.backGrupo1.service;
 
-import org.springframework.stereotype.Service;
-import com.grupo1.backGrupo1.repository.UserRepository;
-import com.grupo1.backGrupo1.model.User;
-import com.grupo1.backGrupo1.dto.UserDTO;
 import com.grupo1.backGrupo1.dto.LoginDTO;
+import com.grupo1.backGrupo1.dto.UserDTO;
 import com.grupo1.backGrupo1.exception.EntityNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.grupo1.backGrupo1.model.User;
+import com.grupo1.backGrupo1.repository.UserRepository;
+import com.grupo1.backGrupo1.security.JwtService;
 import com.grupo1.backGrupo1.util.CpfValidator;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -17,13 +19,55 @@ public class UserService {
 
     private final UserRepository repo;
     private final PasswordEncoder encoder;
+    private final JwtService jwtService;
 
-    public UserService(UserRepository repo, PasswordEncoder encoder) {
+    public UserService(UserRepository repo, PasswordEncoder encoder, JwtService jwtService) {
         this.repo = repo;
         this.encoder = encoder;
+        this.jwtService = jwtService;
     }
 
+    // ==============================
+    // REGISTER
+    // ==============================
     public User register(UserDTO dto) {
+
+        validateUser(dto);
+
+        User user = new User();
+        user.setName(dto.getName());
+        user.setEmail(dto.getEmail());
+        user.setPassword(encoder.encode(dto.getPassword()));
+        user.setCpf(dto.getCpf());
+        user.setDataNascimento(dto.getDataNascimento());
+        user.setRole("USER");
+
+        return repo.save(user);
+    }
+
+    // ==============================
+    // LOGIN (AUTENTICA E RETORNA O USUÁRIO)
+    // ==============================
+    public User login(LoginDTO dto) {
+
+        validateLogin(dto);
+
+        User user = repo.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new RuntimeException("Email ou senha inválidos"));
+
+        if (!encoder.matches(dto.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Email ou senha inválidos");
+        }
+
+        return user;
+    }
+
+    public User findByEmail(String email) {
+        return repo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+    }
+
+    private void validateUser(UserDTO dto) {
 
         if (repo.existsByEmail(dto.getEmail())) {
             throw new RuntimeException("Email já cadastrado");
@@ -48,33 +92,19 @@ public class UserService {
         if (dto.getDataNascimento().isAfter(LocalDate.now())) {
             throw new RuntimeException("Data de nascimento inválida");
         }
+    }
 
-        User u = new User();
-        u.setName(dto.getName());
-        u.setEmail(dto.getEmail());
-        u.setPassword(encoder.encode(dto.getPassword()));
-        u.setCpf(dto.getCpf());
-        u.setDataNascimento(dto.getDataNascimento());
-        u.setRole("USER");
+    private void validateLogin(LoginDTO dto) {
 
-        try {
-            return repo.save(u);
-        } catch (Exception e) {
-            e.printStackTrace(); // 👈 MOSTRA ERRO REAL
-            throw e;
+        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
+            throw new RuntimeException("Email é obrigatório");
+        }
+
+        if (dto.getPassword() == null || dto.getPassword().isBlank()) {
+            throw new RuntimeException("Senha é obrigatória");
         }
     }
 
-    public User login(LoginDTO dto) {
-        User user = repo.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("Email ou senha inválidos"));
-
-        if (!encoder.matches(dto.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Email ou senha inválidos");
-        }
-
-        return user;
-    }
 
     public User findById(Long userId) {
         return repo.findById(userId)
@@ -86,9 +116,7 @@ public class UserService {
     }
 
     public boolean isMaiorDeIdadeById(Long userId) {
-        User user = repo.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-        return isMaiorDeIdade(user);
+        return isMaiorDeIdade(findById(userId));
     }
 
     public int calcularIdade(User user) {

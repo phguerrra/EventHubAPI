@@ -53,7 +53,8 @@ public class UserController {
                     user.getEmail(),
                     user.getRole(),
                     isAdmin,
-                    token
+                    token,
+                    null
             ));
 
         } catch (RuntimeException e) {
@@ -103,4 +104,17 @@ public class UserController {
 
         return ResponseEntity.ok("Bem-vindo admin");
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody String refreshToken) {
+
+        String email = jwtService.extractUsername(refreshToken);
+
+        User user = service.findByEmail(email);
+
+        String newToken = jwtService.generateToken(user);
+
+        return ResponseEntity.ok(newToken);
+    }
+
 }
