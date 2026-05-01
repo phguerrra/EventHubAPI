@@ -29,5 +29,7 @@ public class EventDTO {
 
     private Boolean majority18 = false;
 
+    // New field
+    private String category;
 
 }

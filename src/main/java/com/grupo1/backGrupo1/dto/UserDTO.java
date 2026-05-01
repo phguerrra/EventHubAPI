@@ -29,5 +29,8 @@ public class UserDTO {
     @Past(message = "Data de nascimento deve ser no passado")
     private LocalDate dataNascimento;
 
+    // New optional contact fields
+    private String phone;
+    private String address;
 
 }

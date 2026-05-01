@@ -8,10 +8,11 @@ import com.grupo1.backGrupo1.service.UserService;
 import com.grupo1.backGrupo1.dto.UserDTO;
 import com.grupo1.backGrupo1.dto.LoginDTO;
 import com.grupo1.backGrupo1.dto.LoginResponseDTO;
+import com.grupo1.backGrupo1.dto.UserResponseDTO;
 import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.security.JwtService;
 
-import jakarta.servlet.http.HttpSession;
+import org.springframework.security.core.Authentication;
 import jakarta.validation.Valid;
 import java.util.Map;
 
@@ -36,16 +37,12 @@ public class UserController {
 
     // LOGIN (COM TRATAMENTO DE ERRO)
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody @Valid LoginDTO dto, HttpSession session) {
+    public ResponseEntity<?> login(@RequestBody @Valid LoginDTO dto) {
         try {
             User user = service.login(dto);
             String token = jwtService.generateToken(user);
 
             boolean isAdmin = service.isAdmin(user);
-
-            session.setAttribute("userId", user.getId());
-            session.setAttribute("userRole", user.getRole());
-            session.setAttribute("isAdmin", isAdmin);
 
             return ResponseEntity.ok(new LoginResponseDTO(
                     "Login realizado com sucesso",
@@ -64,39 +61,29 @@ public class UserController {
         }
     }
 
-    // LOGOUT
+    // LOGOUT (kept for compatibility but stateless apps may not use it)
     @PostMapping("/logout")
-    public Map<String, String> logout(HttpSession session) {
-        session.invalidate();
+    public Map<String, String> logout() {
         return Map.of("message", "Logout realizado com sucesso");
     }
 
-    // USUÁRIO LOGADO
+    // USUÁRIO LOGADO via JWT
     @GetMapping("/me")
-    public Map<String, Object> me(HttpSession session) {
-
-        Object userId = session.getAttribute("userId");
-        Object userRole = session.getAttribute("userRole");
-        Object isAdmin = session.getAttribute("isAdmin");
-
-        if (userId == null) {
-            throw new RuntimeException("Nenhum usuário logado");
-        }
-
-        return Map.of(
-                "userId", userId,
-                "role", userRole,
-                "isAdmin", isAdmin != null ? isAdmin : false
-        );
+    public ResponseEntity<UserResponseDTO> me(Authentication authentication) {
+        String email = authentication.getName();
+        User user = service.findByEmail(email);
+        UserResponseDTO dto = service.toResponse(user);
+        return ResponseEntity.ok(dto);
     }
 
     // AREA ADMIN (NOVO)
     @PostMapping("/admin/dashboard")
-    public ResponseEntity<?> areaAdmin(HttpSession session) {
+    public ResponseEntity<?> areaAdmin(Authentication authentication) {
 
-        Boolean isAdmin = (Boolean) session.getAttribute("isAdmin");
+        User user = service.findByEmail(authentication.getName());
+        boolean isAdmin = service.isAdmin(user);
 
-        if (isAdmin == null || !isAdmin) {
+        if (!isAdmin) {
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
                     .body("Acesso negado");

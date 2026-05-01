@@ -27,4 +27,8 @@ public class User {
     private String cpf;
 
     private LocalDate dataNascimento;
+
+    // New fields
+    private String phone;
+    private String address;
 }

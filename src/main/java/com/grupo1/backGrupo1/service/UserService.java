@@ -2,6 +2,7 @@ package com.grupo1.backGrupo1.service;
 
 import com.grupo1.backGrupo1.dto.LoginDTO;
 import com.grupo1.backGrupo1.dto.UserDTO;
+import com.grupo1.backGrupo1.dto.UserResponseDTO;
 import com.grupo1.backGrupo1.exception.EntityNotFoundException;
 import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.repository.UserRepository;
@@ -41,6 +42,8 @@ public class UserService {
         user.setCpf(dto.getCpf());
         user.setDataNascimento(dto.getDataNascimento());
         user.setRole("USER");
+        user.setPhone(dto.getPhone());
+        user.setAddress(dto.getAddress());
 
         return repo.save(user);
     }
@@ -65,6 +68,20 @@ public class UserService {
     public User findByEmail(String email) {
         return repo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+    }
+
+    public UserResponseDTO toResponse(User user) {
+        if (user == null) return null;
+        return new UserResponseDTO(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getCpf(),
+                user.getDataNascimento(),
+                user.getRole(),
+                user.getPhone(),
+                user.getAddress()
+        );
     }
 
     private void validateUser(UserDTO dto) {
