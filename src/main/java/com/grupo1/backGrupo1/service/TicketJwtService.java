@@ -74,6 +74,25 @@ public class TicketJwtService {
         }
     }
 
+    // Generate admin token with 'role' claim
+    public String generateAdminToken(String username, long expirationMillis) {
+        long now = Instant.now().getEpochSecond();
+        long exp = now + (expirationMillis / 1000);
+
+        String header = toJson(Map.of("alg", "HS256", "typ", "JWT"));
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("sub", username);
+        payload.put("role", "ADMIN");
+        payload.put("iat", now);
+        payload.put("exp", exp);
+
+        String headerB64 = base64UrlEncode(header.getBytes(StandardCharsets.UTF_8));
+        String payloadB64 = base64UrlEncode(toJson(payload).getBytes(StandardCharsets.UTF_8));
+        String signingInput = headerB64 + "." + payloadB64;
+        String signature = signHmacSha256(signingInput, secret);
+        return signingInput + "." + signature;
+    }
+
     private String toJson(Object obj) {
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
