@@ -12,6 +12,9 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 public class SecurityConfig {
@@ -41,10 +44,15 @@ public class SecurityConfig {
     }
 
     @Bean
-    public InMemoryUserDetailsManager users() {
-        UserDetails admin = User.withDefaultPasswordEncoder()
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public InMemoryUserDetailsManager users(PasswordEncoder passwordEncoder) {
+        UserDetails admin = User.builder()
                 .username("admin")
-                .password("adminpass")
+                .password(passwordEncoder.encode("adminpass"))
                 .roles("ADMIN")
                 .build();
         return new InMemoryUserDetailsManager(admin);
