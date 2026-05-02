@@ -22,11 +22,16 @@ public class AdminAuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AdminLoginDTO dto) {
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword())
-        );
-        // generate admin token
-        String token = jwtService.generateAdminToken(dto.getUsername(), dto.getExpirationMinutes() * 60 * 1000);
-        return ResponseEntity.ok(java.util.Map.of("token", token));
+        try {
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword())
+            );
+            // generate admin token
+            String token = jwtService.generateAdminToken(dto.getUsername(), dto.getExpirationMinutes() * 60 * 1000);
+            return ResponseEntity.ok(java.util.Map.of("token", token));
+        } catch (org.springframework.security.core.AuthenticationException ex) {
+            // Return consistent message in Portuguese matching app style
+            return ResponseEntity.status(401).body(java.util.Map.of("erro", "Usuário inexistente ou senha inválida"));
+        }
     }
 }
