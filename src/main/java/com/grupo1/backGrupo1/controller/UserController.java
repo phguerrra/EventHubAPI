@@ -46,6 +46,7 @@ public class UserController {
 
             return ResponseEntity.ok(new LoginResponseDTO(
                     "Login realizado com sucesso",
+                    user.getId(),
                     user.getName(),
                     user.getEmail(),
                     user.getRole(),

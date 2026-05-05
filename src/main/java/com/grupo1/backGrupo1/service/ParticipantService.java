@@ -34,31 +34,31 @@ public class ParticipantService {
         Event event = eventsRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Evento não encontrado com id: " + eventId));
 
-        long totalInscritos = participantRepository.countByEventId(eventId);
+        // Busca o usuário pelo userId para pegar os dados reais
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com id: " + userId));
 
+        long totalInscritos = participantRepository.countByEventId(eventId);
         if (totalInscritos >= event.getMaxParticipants()) {
             throw new BusinessRuleException("Evento lotado");
         }
 
-        if (participantRepository.existsByEventIdAndEmail(eventId, participant.getEmail())) {
+        if (participantRepository.existsByEventIdAndEmail(eventId, user.getEmail())) {
             throw new BusinessRuleException("Email já inscrito neste evento");
         }
 
         if (event.isMajority18()) {
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com id: " + userId));
-
             int idade = Period.between(user.getDataNascimento(), LocalDate.now()).getYears();
             if (idade < 18) {
                 throw new BusinessRuleException("Este evento é restrito a maiores de 18 anos. O usuário tem " + idade + " anos");
             }
         }
-        System.out.println("CPF recebido: " + participant.getCpf());
 
-        if (!CpfValidator.isValid(participant.getCpf())) {
-            throw new BusinessRuleException("CPF inválido");
-        }
-
+        // Sobrescreve com dados reais do banco — ignora o que o front enviou
+        participant.setName(user.getName());
+        participant.setEmail(user.getEmail());
+        participant.setCpf(user.getCpf() != null ? user.getCpf() : "");
+        participant.setPhone(user.getPhone() != null ? user.getPhone() : "");
         participant.setEvent(event);
 
         return participantRepository.save(participant);
