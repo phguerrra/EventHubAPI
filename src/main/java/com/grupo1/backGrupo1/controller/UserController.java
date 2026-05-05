@@ -72,7 +72,11 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> me(Authentication authentication) {
         String email = authentication.getName();
         User user = service.findByEmail(email);
-        return ResponseEntity.ok(Map.of("id", user.getId(), "cargo", user.getRole()));
+        return ResponseEntity.ok(Map.of(
+                "name", user.getName(),
+                "email", user.getEmail(),
+                "phone", user.getPhone()
+        ));
     }
 
     // AREA ADMIN (NOVO)
