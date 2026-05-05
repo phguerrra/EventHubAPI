@@ -38,12 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 } else {
-                    // Not ADMIN - set simple authentication (optional)
                     UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(principal, null, List.of());
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             } catch (Exception e) {
-                // Invalid token - do not set authentication
             }
         }
 

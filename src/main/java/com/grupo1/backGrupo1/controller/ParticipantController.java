@@ -39,7 +39,10 @@ public class ParticipantController {
         participant.setPhone(dto.getPhone());
         participant.setCpf(dto.getCpf());
         com.grupo1.backGrupo1.model.Participant newParticipant = service.registerForEvent(eventId, participant, userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(newParticipant);
+        Map<String, Object> resposta = new HashMap<>();
+        resposta.put("id", newParticipant.getId());
+        resposta.put("participant", newParticipant);
+        return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
     }
 
     // Delete
