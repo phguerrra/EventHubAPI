@@ -73,12 +73,16 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> me(Authentication authentication) {
         String email = authentication.getName();
         User user = service.findByEmail(email);
-        return ResponseEntity.ok(Map.of(
-                "name", user.getName(),
-                "email", user.getEmail(),
-                "phone", user.getPhone(),
-                "cpf", user.getCpf()
-        ));
+
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("name", user.getName());
+        response.put("email", user.getEmail());
+        response.put("phone", user.getPhone() != null ? user.getPhone() : "");
+        response.put("cpf", user.getCpf() != null ? user.getCpf() : "");
+        response.put("role", user.getRole());
+        response.put("userId", user.getId());
+
+        return ResponseEntity.ok(response);
     }
 
     // AREA ADMIN (NOVO)
