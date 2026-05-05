@@ -69,11 +69,10 @@ public class UserController {
 
     // USUÁRIO LOGADO via JWT
     @GetMapping("/me")
-    public ResponseEntity<UserResponseDTO> me(Authentication authentication) {
+    public ResponseEntity<Map<String, Object>> me(Authentication authentication) {
         String email = authentication.getName();
         User user = service.findByEmail(email);
-        UserResponseDTO dto = service.toResponse(user);
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(Map.of("id", user.getId(), "cargo", user.getRole()));
     }
 
     // AREA ADMIN (NOVO)
