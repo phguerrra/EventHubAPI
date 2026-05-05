@@ -34,14 +34,14 @@ public class ParticipantService {
         Event event = eventsRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Evento não encontrado com id: " + eventId));
 
-        if (participantRepository.existsByEventIdAndEmail(eventId, participant.getEmail())) {
-            throw new BusinessRuleException("Este email já está inscrito no evento: " + event.getTitle());
-        }
-
         long totalInscritos = participantRepository.countByEventId(eventId);
 
         if (totalInscritos >= event.getMaxParticipants()) {
-            throw new BusinessRuleException("O evento atingiu o número máximo de participantes");
+            throw new BusinessRuleException("Evento lotado");
+        }
+
+        if (participantRepository.existsByEventIdAndEmail(eventId, participant.getEmail())) {
+            throw new BusinessRuleException("Email já inscrito neste evento");
         }
 
         if (event.isMajority18()) {
