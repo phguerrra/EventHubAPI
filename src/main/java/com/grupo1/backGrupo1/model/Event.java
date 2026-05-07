@@ -25,6 +25,7 @@ public class Event {
     private int maxParticipants;
     private boolean majority18;
     private String category;
+    private boolean deleted = false;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)

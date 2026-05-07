@@ -22,11 +22,11 @@ public class EventsService {
     }
 
     public List<Event> listAll() {
-        return repository.findAll();
+        return repository.findAllByDeletedFalse();
     }
 
     public Event getById(Long id) {
-        return repository.findById(id)
+        return repository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new EntityNotFoundException("Evento não encontrado com id: " + id));
     }
 
@@ -50,10 +50,10 @@ public class EventsService {
     }
 
     public void deleteById(Long id) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Evento não encontrado com id: " + id);
-        }
-        repository.deleteById(id);
+        Event event = repository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new EntityNotFoundException("Evento não encontrado com id: " + id));
+        event.setDeleted(true);
+        repository.save(event);
     }
 
     public void cancelRegistration(Long eventId, Long participantId) {

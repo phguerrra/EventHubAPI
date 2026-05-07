@@ -38,12 +38,12 @@ public class ParticipantService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com id: " + userId));
 
-        long totalInscritos = participantRepository.countByEventId(eventId);
+        long totalInscritos = participantRepository.countByEventIdAndDeletedFalse(eventId);
         if (totalInscritos >= event.getMaxParticipants()) {
             throw new BusinessRuleException("Evento lotado");
         }
 
-        if (participantRepository.existsByEventIdAndEmail(eventId, user.getEmail())) {
+        if (participantRepository.existsByEventIdAndEmailAndDeletedFalse(eventId, user.getEmail())) {
             throw new BusinessRuleException("Email já inscrito neste evento");
         }
 
@@ -65,22 +65,26 @@ public class ParticipantService {
     }
 
     public List<Participant> listParticipantsForEvent(Long eventId) {
-        return participantRepository.findByEventId(eventId);
+        return participantRepository.findByEventIdAndDeletedFalse(eventId);
     }
 
     public void removeParticipantById(Long participantId) {
-        if (!participantRepository.existsById(participantId)) {
+        Participant participant = participantRepository.findById(participantId)
+                .orElseThrow(() -> new EntityNotFoundException("Participante não encontrado com id: " + participantId));
+        // If already deleted or not found as active, treat as not found
+        if (participant.isDeleted()) {
             throw new EntityNotFoundException("Participante não encontrado com id: " + participantId);
         }
-        participantRepository.deleteById(participantId);
+        participant.setDeleted(true);
+        participantRepository.save(participant);
     }
 
     public boolean isEmailRegistered(Long eventId, String email) {
-        return participantRepository.existsByEventIdAndEmail(eventId, email);
+        return participantRepository.existsByEventIdAndEmailAndDeletedFalse(eventId, email);
     }
 
     public Participant findParticipantByEventAndEmail(Long eventId, String email) {
-        return participantRepository.findByEventIdAndEmail(eventId, email)
+        return participantRepository.findByEventIdAndEmailAndDeletedFalse(eventId, email)
                 .orElseThrow(() -> new EntityNotFoundException("Participante não encontrado para este evento"));
     }
 }
