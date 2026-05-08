@@ -14,6 +14,11 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import com.grupo1.backGrupo1.service.email.EmailService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ParticipantService {
@@ -21,11 +26,15 @@ public class ParticipantService {
     private final ParticipantRepository participantRepository;
     private final EventsRepository eventsRepository;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
-    public ParticipantService(ParticipantRepository participantRepository, EventsRepository eventsRepository, UserRepository userRepository) {
+    private static final Logger logger = LoggerFactory.getLogger(ParticipantService.class);
+
+    public ParticipantService(ParticipantRepository participantRepository, EventsRepository eventsRepository, UserRepository userRepository, EmailService emailService) {
         this.participantRepository = participantRepository;
         this.eventsRepository = eventsRepository;
         this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -61,7 +70,33 @@ public class ParticipantService {
         participant.setPhone(user.getPhone() != null ? user.getPhone() : "");
         participant.setEvent(event);
 
-        return participantRepository.save(participant);
+        Participant saved = participantRepository.save(participant);
+
+        // Envia o e-mail após commit da transação para evitar rollback por falha no envio
+        String subject = "Inscrição confirmada";
+        String html = "<h1>Inscrição confirmada</h1><p>Sua inscrição foi realizada com sucesso.</p>";
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        emailService.sendConfirmationEmail(saved.getEmail(), subject, html);
+                    } catch (Exception e) {
+                        logger.error("Erro ao enviar email de confirmação para {}", saved.getEmail(), e);
+                    }
+                }
+            });
+        } else {
+            // Fallback (não ideal) — tenta enviar imediatamente
+            try {
+                emailService.sendConfirmationEmail(saved.getEmail(), subject, html);
+            } catch (Exception e) {
+                logger.error("Erro ao enviar email de confirmação para {}", saved.getEmail(), e);
+            }
+        }
+
+        return saved;
     }
 
     public List<Participant> listParticipantsForEvent(Long eventId) {

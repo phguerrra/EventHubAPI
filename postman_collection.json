@@ -117,5 +117,31 @@
         "url": { "raw": "{{baseUrl}}/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["events","{{eventId}}"] }
       }
     }
+,
+    {
+      "name": "Register for event (trigger email)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+              "pm.test(\"Response has id\", function () { var json = pm.response.json(); pm.expect(json.id).to.exist; });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Teste Participant\",\n  \"email\": \"teste@exemplo.com\",\n  \"phone\": \"\", \n  \"cpf\": \"\",\n  \"dataNascimento\": \"1990-01-01\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/events/{{eventId}}/participants?userId={{userId}}", "host": ["{{baseUrl}}"], "path": ["events","{{eventId}}","participants"], "query": [ { "key": "userId", "value": "{{userId}}" } ] }
+      },
+      "response": []
+    }
   ]
 }
