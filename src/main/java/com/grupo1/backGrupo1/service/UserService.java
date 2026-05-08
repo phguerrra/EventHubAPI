@@ -3,6 +3,7 @@ package com.grupo1.backGrupo1.service;
 import com.grupo1.backGrupo1.dto.LoginDTO;
 import com.grupo1.backGrupo1.dto.UserDTO;
 import com.grupo1.backGrupo1.dto.UserResponseDTO;
+import com.grupo1.backGrupo1.exception.AuthenticationException;
 import com.grupo1.backGrupo1.exception.EntityNotFoundException;
 import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.repository.UserRepository;
@@ -56,10 +57,10 @@ public class UserService {
         validateLogin(dto);
 
         User user = repo.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("Email ou senha inválidos"));
+                .orElseThrow(() -> new AuthenticationException("Email ou senha inválidos"));
 
         if (!encoder.matches(dto.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Email ou senha inválidos");
+            throw new AuthenticationException("Email ou senha inválidos");
         }
 
         return user;

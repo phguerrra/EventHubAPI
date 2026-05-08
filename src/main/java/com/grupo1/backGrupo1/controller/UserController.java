@@ -37,12 +37,16 @@ public class UserController {
 
     // LOGIN (COM TRATAMENTO DE ERRO)
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody @Valid LoginDTO dto) {
+    public ResponseEntity<?> login(@RequestBody LoginDTO dto, jakarta.servlet.http.HttpSession session) {
         try {
             User user = service.login(dto);
             String token = jwtService.generateToken(user);
 
             boolean isAdmin = service.isAdmin(user);
+
+            session.setAttribute("userId", user.getId());
+            session.setAttribute("userRole", user.getRole());
+            session.setAttribute("isAdmin", isAdmin);
 
             return ResponseEntity.ok(new LoginResponseDTO(
                     "Login realizado com sucesso",
@@ -87,12 +91,11 @@ public class UserController {
 
     // AREA ADMIN (NOVO)
     @PostMapping("/admin/dashboard")
-    public ResponseEntity<?> areaAdmin(Authentication authentication) {
+    public ResponseEntity<?> areaAdmin(jakarta.servlet.http.HttpSession session) {
 
-        User user = service.findByEmail(authentication.getName());
-        boolean isAdmin = service.isAdmin(user);
+        Boolean isAdmin = (Boolean) session.getAttribute("isAdmin");
 
-        if (!isAdmin) {
+        if (isAdmin == null || !isAdmin) {
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
                     .body("Acesso negado");
