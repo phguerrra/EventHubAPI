@@ -8,6 +8,8 @@ public interface EventsRepository extends JpaRepository<Event, Long> {
 
     List<Event> findAllByDeletedFalse();
 
+    List<Event> findByCategoryIgnoreCaseAndDeletedFalse(String category);
+
     java.util.Optional<Event> findByIdAndDeletedFalse(Long id);
 
     boolean existsByIdAndDeletedFalse(Long id);
