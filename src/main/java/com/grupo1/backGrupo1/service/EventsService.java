@@ -13,6 +13,15 @@ import java.util.List;
 @Service
 public class EventsService {
 
+
+    private static final List<String> CATEGORIES = List.of(
+        "Tecnologia",
+        "Educação",
+        "Música",
+        "Esporte",
+        "Entretenimento"
+                );
+
     private final EventsRepository repository;
     private final ParticipantRepository participantRepository;
 
@@ -21,8 +30,28 @@ public class EventsService {
         this.participantRepository = participantRepository;
     }
 
-    public List<Event> listAll() {
+    public List<Event> listAll(String category) {
+        if (category != null && !category.isBlank()){
+            validateCategory(category);
+
+            return repository.findByCategoryIgnoreCaseAndDeletedFalse(category);
+        }
         return repository.findAllByDeletedFalse();
+    }
+
+    public List<String> listCategories(){
+        return CATEGORIES;
+    }
+
+    private void validateCategory(String category){
+        boolean isValid = CATEGORIES.stream()
+                .anyMatch(c -> c.equalsIgnoreCase(category));
+
+        if(!isValid){
+            throw new BusinessRuleException(
+                    "Categoria invalida. Use:" + CATEGORIES
+            );
+        }
     }
 
     public Event getById(Long id) {
@@ -46,6 +75,12 @@ public class EventsService {
         if (event.getParticipants() != null && event.getParticipants().size() > event.getMaxParticipants()) {
             throw new BusinessRuleException("Número de participantes excede o máximo permitido");
         }
+        if (event.getCategory() == null || event.getCategory().isBlank()){
+            throw new BusinessRuleException(
+                    "Categoria do evento é obrigatoria"
+            );
+        }
+        validateCategory(event.getCategory());
         return repository.save(event);
     }
 

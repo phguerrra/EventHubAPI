@@ -21,8 +21,13 @@ public class EventsController {
     }
 
     @GetMapping
-    public List<Event> listAll() {
-        return service.listAll();
+    public List<Event> listAll(@RequestParam(required = false) String category) {
+        return service.listAll(category);
+    }
+
+    @GetMapping("/categories")
+    public List<String> listCategories(){
+        return service.listCategories();
     }
 
     @GetMapping("/{id}")
@@ -42,6 +47,7 @@ public class EventsController {
         event.setLocation(dto.getLocation());
         event.setMaxParticipants(dto.getMaxParticipants());
         event.setMajority18(Boolean.TRUE.equals(dto.getMajority18()));
+        event.setCategory(dto.getCategory());
 
         return service.saveEvent(event);
     }
@@ -59,6 +65,7 @@ public class EventsController {
         event.setLocation(dto.getLocation());
         event.setMaxParticipants(dto.getMaxParticipants());
         event.setMajority18(Boolean.TRUE.equals(dto.getMajority18()));
+        event.setCategory(dto.getCategory());
 
         return service.saveEvent(event);
     }

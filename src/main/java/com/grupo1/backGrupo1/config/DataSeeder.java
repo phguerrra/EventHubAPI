@@ -45,11 +45,29 @@ public class DataSeeder {
             user.setName("João Silva");
             user.setEmail("joao@gmail.com");
             user.setPassword("123456");
-            user.setCpf("734.915.240-08");
+            user.setCpf("046.251.650-40");
             user.setRole("USER");
+
+            User user2 = new User();
+
+            user2.setName("Gabriel Paes");
+            user2.setEmail("gabriel@gmail.com");
+            user2.setPassword("123456");
+            user2.setCpf("474.629.770-36");
+            user2.setRole("USER");
+
+            User user3 = new User();
+
+            user3.setName("Carlos Martins");
+            user3.setEmail("carlos@gmail.com");
+            user3.setPassword("123456");
+            user3.setCpf("401.407.090-53");
+            user3.setRole("USER");
 
             userRepository.save(admin);
             userRepository.save(user);
+            userRepository.save(user2);
+            userRepository.save(user3);
 
             Event event1 = new Event();
 
@@ -83,6 +101,17 @@ public class DataSeeder {
             participant.setEmail(user.getEmail());
             participant.setCpf(user.getCpf());
             participant.setPhone("55999468981");
+
+            Participant participant2 = new Participant();
+
+            participant2.setName(user2.getName());
+            participant2.setEmail(user2.getEmail());
+            participant2.setCpf(user2.getCpf());
+            participant2.setPhone("55996387923");
+
+            participant2.setEvent(event1);
+
+            participantRepository.save(participant2);
 
             participant.setEvent(event1);
 
