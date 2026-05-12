@@ -7,10 +7,16 @@ import com.grupo1.backGrupo1.service.EventsService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import java.util.List;
 
 @RestController
+@Tag(name="Events", description="Operações relacionadas a eventos")
 @RequestMapping("/events")
 public class EventsController {
 
@@ -21,16 +27,22 @@ public class EventsController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar todos os eventos")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Lista de eventos retornada com sucesso") })
     public List<Event> listAll() {
         return service.listAll();
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obter evento por ID")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Evento encontrado"), @ApiResponse(responseCode = "404", description = "Evento não encontrado") })
     public Event getById(@PathVariable Long id) {
         return service.getById(id);
     }
 
     @PostMapping
+    @Operation(summary = "Criar um novo evento", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Evento criado"), @ApiResponse(responseCode = "400", description = "Dados inválidos") })
     public Event create(@RequestBody @Valid EventDTO dto, HttpSession session) {
         validarAdmin(session);
 
@@ -47,6 +59,8 @@ public class EventsController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Atualizar evento existente", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Evento atualizado"), @ApiResponse(responseCode = "404", description = "Evento não encontrado") })
     public Event update(@PathVariable Long id, @RequestBody @Valid EventDTO dto, HttpSession session) {
         validarAdmin(session);
 
@@ -64,6 +78,8 @@ public class EventsController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Remover evento (soft delete)", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({ @ApiResponse(responseCode = "204", description = "Evento removido"), @ApiResponse(responseCode = "404", description = "Evento não encontrado") })
     public void delete(@PathVariable Long id, HttpSession session) {
         validarAdmin(session);
         service.deleteById(id);
