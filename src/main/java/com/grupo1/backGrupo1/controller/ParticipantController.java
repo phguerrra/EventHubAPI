@@ -5,12 +5,18 @@ import com.grupo1.backGrupo1.service.ParticipantService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestController
+@Tag(name="Participants", description="Operações relacionadas a participantes")
 @RequestMapping("/events/{eventId}/participants")
 public class ParticipantController {
 
@@ -22,6 +28,8 @@ public class ParticipantController {
 
     // get
     @GetMapping
+    @Operation(summary = "Listar participantes de um evento")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Lista retornada") })
     public ResponseEntity<List<Participant>> listParticipants(@PathVariable Long eventId) {
         List<Participant> participants = service.listParticipantsForEvent(eventId);
         return ResponseEntity.ok(participants);
@@ -29,6 +37,8 @@ public class ParticipantController {
 
     // post
     @PostMapping
+    @Operation(summary = "Registrar participante em evento")
+    @ApiResponses({ @ApiResponse(responseCode = "201", description = "Participante registrado"), @ApiResponse(responseCode = "400", description = "Dados inválidos") })
     public ResponseEntity<?> registerParticipant(
             @PathVariable Long eventId,
             @RequestParam Long userId,
@@ -47,6 +57,8 @@ public class ParticipantController {
 
     // Delete
     @DeleteMapping("/{participantId}")
+    @Operation(summary = "Remover participante")
+    @ApiResponses({ @ApiResponse(responseCode = "204", description = "Removido"), @ApiResponse(responseCode = "404", description = "Não encontrado") })
     public ResponseEntity<?> removeParticipant(@PathVariable Long participantId) {
         service.removeParticipantById(participantId);
         return ResponseEntity.noContent().build();
@@ -54,6 +66,8 @@ public class ParticipantController {
 
     // get
     @GetMapping("/check-email")
+    @Operation(summary = "Checar se e-mail já está inscrito")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Status de inscrição retornado") })
     public ResponseEntity<Map<String, Boolean>> checkEmailRegistered(
             @PathVariable Long eventId,
             @RequestParam String email) {
