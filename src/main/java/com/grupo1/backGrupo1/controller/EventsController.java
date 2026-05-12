@@ -21,8 +21,8 @@ public class EventsController {
     }
 
     @GetMapping
-    public List<Event> listAll() {
-        return service.listAll();
+    public List<Event> listAll(@RequestParam(required = false) String category) {
+        return service.listAll(category);
     }
 
     @GetMapping("/{id}")
