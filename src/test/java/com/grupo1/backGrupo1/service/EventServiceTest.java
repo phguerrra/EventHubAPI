@@ -28,62 +28,61 @@ class EventsServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    // ✅ TESTE DE SUCESSO
     @Test
-    void deveSalvarEventoComSucesso() {
+    void shouldSaveEventSuccessfully() {
         Event event = new Event();
-        event.setTitle("Evento Teste");
+        event.setTitle("Test Event");
         event.setMaxParticipants(10);
         event.setDate(LocalDate.now());
+        event.setCategory("Tecnologia"); // importante
 
         when(repository.save(any(Event.class))).thenReturn(event);
 
-        Event resultado = service.saveEvent(event);
+        Event result = service.saveEvent(event);
 
-        assertNotNull(resultado);
-        assertEquals("Evento Teste", resultado.getTitle());
+        assertNotNull(result);
+        assertEquals("Test Event", result.getTitle());
     }
 
-    // ❌ TESTE DE ERRO (TÍTULO NULO)
     @Test
-    void deveDarErroQuandoTituloForNulo() {
+    void shouldThrowExceptionWhenTitleIsNull() {
         Event event = new Event();
         event.setMaxParticipants(10);
         event.setDate(LocalDate.now());
+        event.setCategory("Tecnologia");
 
         assertThrows(RuntimeException.class, () -> {
             service.saveEvent(event);
         });
     }
 
-    // ❌ TESTE DE ERRO (MAX PARTICIPANTS INVÁLIDO)
     @Test
-    void deveDarErroQuandoMaxParticipantsForInvalido() {
+    void shouldThrowExceptionWhenMaxParticipantsIsInvalid() {
         Event event = new Event();
-        event.setTitle("Evento Teste");
+        event.setTitle("Test Event");
         event.setMaxParticipants(0);
         event.setDate(LocalDate.now());
+        event.setCategory("Tecnologia");
 
         assertThrows(RuntimeException.class, () -> {
             service.saveEvent(event);
         });
     }
 
-    // ❌ TESTE DE ERRO (DATA NULA)
     @Test
-    void deveDarErroQuandoDataForNula() {
+    void shouldThrowExceptionWhenDateIsNull() {
         Event event = new Event();
-        event.setTitle("Evento Teste");
+        event.setTitle("Test Event");
         event.setMaxParticipants(10);
+        event.setCategory("Tecnologia");
 
         assertThrows(RuntimeException.class, () -> {
             service.saveEvent(event);
         });
     }
 
-    // 🧨 TESTE DE SOFT DELETE
     @Test
-    void deveFazerSoftDelete() {
+    void shouldPerformSoftDelete() {
         Event event = new Event();
         event.setDeleted(false);
 
