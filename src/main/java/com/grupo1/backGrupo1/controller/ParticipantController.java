@@ -44,12 +44,12 @@ public class ParticipantController {
         return ResponseEntity.ok(participants);
     }
 
-    // GET /events/{eventId}/participants/search?q=termo
+    // GET /events/{eventId}/participants/search?
     @GetMapping("/search")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Resultados retornados")})
     public ResponseEntity<List<Participant>> searchParticipants(
             @PathVariable Long eventId,
-            @RequestParam String q) {
+            @RequestParam(required = false) String q) {
 
         return ResponseEntity.ok(service.searchParticipants(eventId, q));
     }

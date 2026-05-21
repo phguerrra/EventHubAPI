@@ -30,7 +30,7 @@ public class EventsController {
     // BUSCA GERAL
     @GetMapping("/search")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Resultados retornados")})
-    public List<Event> search(@RequestParam String q) {
+    public List<Event> search(@RequestParam(required = false) String q) {
         return service.search(q);
     }
 
