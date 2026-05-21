@@ -4,6 +4,8 @@ import com.grupo1.backGrupo1.dto.EventDTO;
 import com.grupo1.backGrupo1.exception.BusinessRuleException;
 import com.grupo1.backGrupo1.model.Event;
 import com.grupo1.backGrupo1.service.EventsService;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +25,13 @@ public class EventsController {
     @GetMapping
     public List<Event> listAll(@RequestParam(required = false) String category) {
         return service.listAll(category);
+    }
+
+    // BUSCA GERAL
+    @GetMapping("/search")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Resultados retornados")})
+    public List<Event> search(@RequestParam(required = false) String q) {
+        return service.search(q);
     }
 
     @GetMapping("/{id}")

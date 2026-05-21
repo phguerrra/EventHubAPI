@@ -33,11 +33,7 @@ public class ParticipantController {
     }
 
     // GET /events/{eventId}/participants
-    //   ?status=PENDENTE|APROVADO|REJEITADO  (opcional)
-    //   ?orderBy=nome|datainscricao|presenca  (opcional)
     @GetMapping
-    @Operation(summary = "Listar participantes de um evento",
-            description = "Filtre por status (PENDENTE, APROVADO, REJEITADO) e ordene por nome, datainscricao ou presenca")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Lista retornada")})
     public ResponseEntity<List<Participant>> listParticipants(
             @PathVariable Long eventId,
@@ -46,6 +42,16 @@ public class ParticipantController {
 
         List<Participant> participants = service.listParticipantsForEvent(eventId, status, orderBy);
         return ResponseEntity.ok(participants);
+    }
+
+    // GET /events/{eventId}/participants/search?
+    @GetMapping("/search")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Resultados retornados")})
+    public ResponseEntity<List<Participant>> searchParticipants(
+            @PathVariable Long eventId,
+            @RequestParam(required = false) String q) {
+
+        return ResponseEntity.ok(service.searchParticipants(eventId, q));
     }
 
     // POST /events/{eventId}/participants
@@ -73,7 +79,6 @@ public class ParticipantController {
     }
 
     // PATCH /events/{eventId}/participants/{id}/aprovar
-    // Admin aprova a inscrição
     @PatchMapping("/{participantId}/aprovar")
     @Operation(summary = "Aprovar inscrição de participante (admin)")
     @ApiResponses({
@@ -89,7 +94,6 @@ public class ParticipantController {
     }
 
     // PATCH /events/{eventId}/participants/{id}/rejeitar
-    // Admin rejeita a inscrição
     @PatchMapping("/{participantId}/rejeitar")
     @Operation(summary = "Rejeitar inscrição de participante (admin)")
     @ApiResponses({
@@ -104,8 +108,6 @@ public class ParticipantController {
     }
 
     // PATCH /events/{eventId}/participants/{id}/presenca
-    // Admin marca presença no dia do evento
-    // Body: { "presenca": "PRESENTE" } ou { "presenca": "AUSENTE" }
     @PatchMapping("/{participantId}/presenca")
     @Operation(summary = "Marcar presença de participante no evento (admin)")
     @ApiResponses({
