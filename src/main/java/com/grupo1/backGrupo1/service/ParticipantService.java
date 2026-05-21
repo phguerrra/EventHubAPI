@@ -166,6 +166,13 @@ public class ParticipantService {
 
         return participantRepository.findByEventIdAndDeletedFalse(eventId, sort);
     }
+// BUSCA GERAL DE PARTICIPANTES
+    public List<Participant> searchParticipants(Long eventId, String termo) {
+        if (termo == null || termo.isBlank()) {
+            return participantRepository.findByEventIdAndDeletedFalse(eventId);
+        }
+        return participantRepository.searchByTermo(eventId, termo.trim());
+    }
 
     // REMOVER PARTICIPANTE
     public void removeParticipantById(Long participantId) {

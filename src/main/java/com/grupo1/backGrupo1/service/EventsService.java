@@ -43,6 +43,18 @@ public class EventsService {
         return CATEGORIES;
     }
 
+    public List<Event> search(String termo) {
+
+        // Caso o termo venha vazio ou nulo,
+        // retorna todos os eventos ativos
+        if (termo == null || termo.isBlank()) {
+            return repository.findAllByDeletedFalse();
+        }
+
+        // Realiza a busca utilizando o termo digitado
+        return repository.searchByTermo(termo.trim());
+    }
+
     private void validateCategory(String category){
         boolean isValid = CATEGORIES.stream()
                 .anyMatch(c -> c.equalsIgnoreCase(category));
@@ -58,6 +70,7 @@ public class EventsService {
         return repository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new EntityNotFoundException("Evento não encontrado com id: " + id));
     }
+
 
     public Event saveEvent(Event event) {
         if (event == null) {
