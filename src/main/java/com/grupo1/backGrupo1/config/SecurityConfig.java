@@ -52,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/events/*/participants/**").permitAll()
                         .requestMatchers("/tickets/**").authenticated()
                         .requestMatchers("/users/me").authenticated()
+                        .requestMatchers("/users/me/events").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
