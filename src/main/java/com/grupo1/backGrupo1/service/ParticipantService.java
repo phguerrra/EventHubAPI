@@ -185,6 +185,10 @@ public class ParticipantService {
         return participantRepository.existsByEventIdAndEmailAndDeletedFalse(eventId, email);
     }
 
+    public List<Participant> listInscricoesByEmail(String email) {
+        return participantRepository.findByEmailAndDeletedFalse(email);
+    }
+
     public Participant findParticipantByEventAndEmail(Long eventId, String email) {
         return participantRepository.findByEventIdAndEmailAndDeletedFalse(eventId, email)
                 .orElseThrow(() -> new EntityNotFoundException("Participante não encontrado para este evento"));

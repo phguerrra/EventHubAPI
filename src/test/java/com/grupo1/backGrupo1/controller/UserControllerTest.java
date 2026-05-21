@@ -4,6 +4,7 @@ import com.grupo1.backGrupo1.dto.LoginDTO;
 import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.security.JwtService;
 import com.grupo1.backGrupo1.service.UserService;
+import com.grupo1.backGrupo1.service.ParticipantService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,10 +36,12 @@ class UserControllerTest {
     private UserService service;
     @Mock
     private JwtService jwtService;
+    @Mock
+    private ParticipantService participantService;
 
     @BeforeEach
     void setup() {
-        UserController controller = new UserController(service, jwtService);
+        UserController controller = new UserController(service, jwtService, participantService);
         this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 

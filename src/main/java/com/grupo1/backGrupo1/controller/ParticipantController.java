@@ -1,10 +1,10 @@
 package com.grupo1.backGrupo1.controller;
 
-import com.grupo1.backGrupo1.dto.ParticipantDTO;
 import com.grupo1.backGrupo1.dto.PresencaRequestDTO;
 import com.grupo1.backGrupo1.model.Participant;
-
+import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.service.ParticipantService;
+import com.grupo1.backGrupo1.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -24,9 +25,11 @@ import java.util.Map;
 public class ParticipantController {
 
     private final ParticipantService service;
+    private final UserService userService;
 
-    public ParticipantController(ParticipantService service) {
+    public ParticipantController(ParticipantService service, UserService userService) {
         this.service = service;
+        this.userService = userService;
     }
 
     // GET /events/{eventId}/participants
@@ -45,26 +48,21 @@ public class ParticipantController {
         return ResponseEntity.ok(participants);
     }
 
-    // POST /events/{eventId}/participants?userId=X
-    // Solicita inscrição → fica PENDENTE
+    // POST /events/{eventId}/participants
     @PostMapping
     @Operation(summary = "Solicitar inscrição em evento (fica pendente até admin aprovar)")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Solicitação registrada"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos ou regra de negócio violada")
+            @ApiResponse(responseCode = "400", description = "Regra de negócio violada")
     })
     public ResponseEntity<?> registerParticipant(
             @PathVariable Long eventId,
-            @RequestParam Long userId,
-            @RequestBody @Valid ParticipantDTO dto) {
+            Authentication authentication) {
 
-        Participant participant = new Participant();
-        participant.setName(dto.getName());
-        participant.setEmail(dto.getEmail());
-        participant.setPhone(dto.getPhone());
-        participant.setCpf(dto.getCpf());
+        String email = authentication.getName();
+        User user = userService.findByEmail(email);
 
-        Participant saved = service.registerForEvent(eventId, participant, userId);
+        Participant saved = service.registerForEvent(eventId, new Participant(), user.getId());
 
         Map<String, Object> resposta = new HashMap<>();
         resposta.put("id", saved.getId());
@@ -87,8 +85,7 @@ public class ParticipantController {
             @PathVariable Long eventId,
             @PathVariable Long participantId) {
 
-        Participant aprovado = service.aprovarInscricao(eventId, participantId);
-        return ResponseEntity.ok(aprovado);
+        return ResponseEntity.ok(service.aprovarInscricao(eventId, participantId));
     }
 
     // PATCH /events/{eventId}/participants/{id}/rejeitar
@@ -103,8 +100,7 @@ public class ParticipantController {
             @PathVariable Long eventId,
             @PathVariable Long participantId) {
 
-        Participant rejeitado = service.rejeitarInscricao(eventId, participantId);
-        return ResponseEntity.ok(rejeitado);
+        return ResponseEntity.ok(service.rejeitarInscricao(eventId, participantId));
     }
 
     // PATCH /events/{eventId}/participants/{id}/presenca
@@ -122,8 +118,7 @@ public class ParticipantController {
             @PathVariable Long participantId,
             @RequestBody @Valid PresencaRequestDTO dto) {
 
-        Participant atualizado = service.marcarPresenca(eventId, participantId, dto.getPresenca());
-        return ResponseEntity.ok(atualizado);
+        return ResponseEntity.ok(service.marcarPresenca(eventId, participantId, dto.getPresenca()));
     }
 
     // DELETE /events/{eventId}/participants/{id}
@@ -145,9 +140,8 @@ public class ParticipantController {
             @PathVariable Long eventId,
             @RequestParam String email) {
 
-        boolean emailRegistered = service.isEmailRegistered(eventId, email);
         Map<String, Boolean> resposta = new HashMap<>();
-        resposta.put("emailInscrito", emailRegistered);
+        resposta.put("emailInscrito", service.isEmailRegistered(eventId, email));
         return ResponseEntity.ok(resposta);
     }
 }
