@@ -62,13 +62,13 @@ public class NotificationService {
                             "Evento não encontrado com id: " + dto.getEventId()));
         }
 
-        Notification aviso = new Notification();
-        aviso.setTitulo(dto.getTitulo());
-        aviso.setConteudo(dto.getConteudo());
-        aviso.setTipo(dto.getType());
-        aviso.setEventId(dto.getEventId());
+        Notification notification = new Notification();
+        notification.setTitulo(dto.getTitulo());
+        notification.setConteudo(dto.getConteudo());
+        notification.setTipo(dto.getType());
+        notification.setEventId(dto.getEventId());
 
-        return NotificationResponseDto.from(notificationRepository.save(aviso));
+        return NotificationResponseDto.from(notificationRepository.save(notification));
     }
 
     public void delete(Long id) {
