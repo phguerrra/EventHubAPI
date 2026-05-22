@@ -51,6 +51,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/events/*/participants").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/events/*/participants/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/avisos/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/avisos").authenticated()      // ← falta
+                        .requestMatchers(HttpMethod.DELETE, "/avisos/**").authenticated() // ← falta
                         .requestMatchers("/palestrantes/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/tickets/**").authenticated()
