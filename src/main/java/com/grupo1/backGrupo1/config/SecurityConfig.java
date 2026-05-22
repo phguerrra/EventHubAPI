@@ -53,6 +53,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/avisos/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/avisos").authenticated()      // ← falta
                         .requestMatchers(HttpMethod.DELETE, "/avisos/**").authenticated() // ← falta
+                        .requestMatchers(HttpMethod.GET, "/events/search").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/events/*/participants/search").hasRole("ADMIN")
                         .requestMatchers("/palestrantes/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/tickets/**").authenticated()
