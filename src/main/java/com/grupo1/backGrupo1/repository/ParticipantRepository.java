@@ -36,6 +36,11 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long> 
     // Eventos inscritos(pendentes, aprovados ou rejeitados) por e-mail logado
     List<Participant> findByEmailAndDeletedFalse(String email);
 
+    Optional<Participant> findByUserEmailAndEventId(
+            String email,
+            Long eventId
+    );
+
     @Query("""
         SELECT p FROM Participant p
         WHERE p.deleted = false

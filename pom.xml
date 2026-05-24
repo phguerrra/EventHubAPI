@@ -135,6 +135,12 @@
             <version>2.1.0</version>
         </dependency>
 
+        <!-- Flyway DB migrations -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+
 	</dependencies>
 
 	<build>

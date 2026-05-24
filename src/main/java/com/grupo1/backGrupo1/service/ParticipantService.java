@@ -2,13 +2,17 @@ package com.grupo1.backGrupo1.service;
 
 import com.grupo1.backGrupo1.exception.BusinessRuleException;
 import com.grupo1.backGrupo1.exception.EntityNotFoundException;
-import com.grupo1.backGrupo1.model.*;
+import com.grupo1.backGrupo1.model.Event;
+import com.grupo1.backGrupo1.model.Participant;
+import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.repository.EventsRepository;
 import com.grupo1.backGrupo1.repository.ParticipantRepository;
 import com.grupo1.backGrupo1.repository.UserRepository;
 import com.grupo1.backGrupo1.service.email.EmailService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,221 +32,478 @@ public class ParticipantService {
     private final UserRepository userRepository;
     private final EmailService emailService;
 
-    private static final Logger logger = LoggerFactory.getLogger(ParticipantService.class);
+    private static final Logger logger =
+            LoggerFactory.getLogger(ParticipantService.class);
 
-    public ParticipantService(ParticipantRepository participantRepository,
-                              EventsRepository eventsRepository,
-                              UserRepository userRepository,
-                              EmailService emailService) {
+    public ParticipantService(
+            ParticipantRepository participantRepository,
+            EventsRepository eventsRepository,
+            UserRepository userRepository,
+            EmailService emailService
+    ) {
         this.participantRepository = participantRepository;
         this.eventsRepository = eventsRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
     }
 
-    // SOLICITAÇÃO DE INSCRIÇÃO (fica PENDENTE)
+    // =========================================================
+    // SOLICITAR INSCRIÇÃO
+    // =========================================================
+
     @Transactional
-    public Participant registerForEvent(Long eventId, Participant participant, Long userId) {
+    public Participant registerForEvent(
+            Long eventId,
+            Participant participant,
+            Long userId
+    ) {
 
         Event event = eventsRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Evento não encontrado com id: " + eventId));
+                .orElseThrow(() ->
+                        new EntityNotFoundException(
+                                "Evento não encontrado com id: " + eventId
+                        ));
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com id: " + userId));
+                .orElseThrow(() ->
+                        new EntityNotFoundException(
+                                "Usuário não encontrado com id: " + userId
+                        ));
 
-        // Checa lotação apenas entre APROVADOS
-        long totalAprovados = participantRepository.countByEventIdAndDeletedFalseAndStatus(eventId, Participant.Status.APROVADO);
+        long totalAprovados =
+                participantRepository.countByEventIdAndDeletedFalseAndStatus(
+                        eventId,
+                        Participant.Status.APROVADO
+                );
+
         if (totalAprovados >= event.getMaxParticipants()) {
             throw new BusinessRuleException("Evento lotado");
         }
 
-        // Não permite segunda solicitação
-        if (participantRepository.existsByEventIdAndEmailAndDeletedFalse(eventId, user.getEmail())) {
-            throw new BusinessRuleException("Você já possui uma inscrição (pendente ou aprovada) neste evento");
+        if (participantRepository.existsByEventIdAndEmailAndDeletedFalse(
+                eventId,
+                user.getEmail()
+        )) {
+            throw new BusinessRuleException(
+                    "Você já possui inscrição neste evento"
+            );
         }
 
         if (event.isMajority18()) {
-            int idade = Period.between(user.getDataNascimento(), LocalDate.now()).getYears();
+
+            int idade = Period.between(
+                    user.getDataNascimento(),
+                    LocalDate.now()
+            ).getYears();
+
             if (idade < 18) {
-                throw new BusinessRuleException("Este evento é restrito a maiores de 18 anos. O usuário tem " + idade + " anos");
+                throw new BusinessRuleException(
+                        "Evento permitido apenas para maiores de 18 anos"
+                );
             }
         }
 
-        // Preenche com dados reais do usuário
         participant.setName(user.getName());
         participant.setEmail(user.getEmail());
-        participant.setCpf(user.getCpf() != null ? user.getCpf() : "");
-        participant.setPhone(user.getPhone() != null ? user.getPhone() : "");
+        participant.setCpf(
+                user.getCpf() != null ? user.getCpf() : ""
+        );
+
+        participant.setPhone(
+                user.getPhone() != null ? user.getPhone() : ""
+        );
+
         participant.setEvent(event);
+
         participant.setStatus(Participant.Status.PENDENTE);
+
         participant.setPresenca(Participant.Presenca.PENDENTE);
-        // dataInscricao fica null até o admin aprovar
 
         return participantRepository.save(participant);
     }
 
-    // APROVAR INSCRIÇÃO (admin)
+    // =========================================================
+    // CANCELAR INSCRIÇÃO
+    // =========================================================
+
     @Transactional
-    public Participant aprovarInscricao(Long eventId, Long participantId) {
+    public void cancelarInscricao(
+            String email,
+            Long eventId
+    ) {
 
-        Participant participant = buscarParticipanteAtivo(eventId, participantId);
+        Participant participant =
+                participantRepository
+                        .findByEventIdAndEmailAndDeletedFalse(
+                                eventId,
+                                email
+                        )
+                        .orElseThrow(() ->
+                                new EntityNotFoundException(
+                                        "Inscrição não encontrada"
+                                ));
 
-        if (participant.getStatus() == Participant.Status.APROVADO) {
-            throw new BusinessRuleException("Inscrição já está aprovada");
+        participant.setDeleted(true);
+
+        participantRepository.save(participant);
+    }
+
+    // =========================================================
+    // APROVAR INSCRIÇÃO
+    // =========================================================
+
+    @Transactional
+    public Participant aprovarInscricao(
+            Long eventId,
+            Long participantId
+    ) {
+
+        Participant participant =
+                buscarParticipanteAtivo(eventId, participantId);
+
+        if (participant.getStatus() ==
+                Participant.Status.APROVADO) {
+
+            throw new BusinessRuleException(
+                    "Inscrição já aprovada"
+            );
         }
-        if (participant.getStatus() == Participant.Status.REJEITADO) {
-            throw new BusinessRuleException("Não é possível aprovar uma inscrição rejeitada");
+
+        if (participant.getStatus() ==
+                Participant.Status.REJEITADO) {
+
+            throw new BusinessRuleException(
+                    "Inscrição rejeitada"
+            );
         }
 
-        // Revalida lotação no momento da aprovação
-        long totalAprovados = participantRepository.countByEventIdAndDeletedFalseAndStatus(eventId, Participant.Status.APROVADO);
-        if (totalAprovados >= participant.getEvent().getMaxParticipants()) {
-            throw new BusinessRuleException("Evento lotado — não é possível aprovar mais inscrições");
+        long totalAprovados =
+                participantRepository
+                        .countByEventIdAndDeletedFalseAndStatus(
+                                eventId,
+                                Participant.Status.APROVADO
+                        );
+
+        if (totalAprovados >=
+                participant.getEvent().getMaxParticipants()) {
+
+            throw new BusinessRuleException(
+                    "Evento lotado"
+            );
         }
 
         participant.setStatus(Participant.Status.APROVADO);
+
         participant.setDataInscricao(LocalDateTime.now());
 
-        Participant saved = participantRepository.save(participant);
+        Participant saved =
+                participantRepository.save(participant);
 
-        // E-mail de confirmação após commit
-        String subject = "Inscrição aprovada — " + participant.getEvent().getTitle();
-        String html = "<h1>Inscrição aprovada!</h1>"
-                + "<p>Olá, " + saved.getName() + "!</p>"
-                + "<p>Sua inscrição no evento <strong>" + saved.getEvent().getTitle() + "</strong> foi aprovada.</p>"
-                + "<p>Data: " + saved.getDataInscricao() + "</p>";
+        String subject =
+                "Inscrição aprovada — "
+                        + participant.getEvent().getTitle();
 
-        enviarEmailAposCommit(saved.getEmail(), subject, html);
+        String html =
+                "<h1>Inscrição aprovada!</h1>"
+                        + "<p>Olá, "
+                        + saved.getName()
+                        + "!</p>"
+                        + "<p>Sua inscrição no evento <strong>"
+                        + saved.getEvent().getTitle()
+                        + "</strong> foi aprovada.</p>";
+
+        enviarEmailAposCommit(
+                saved.getEmail(),
+                subject,
+                html
+        );
 
         return saved;
     }
 
-    // REJEITAR INSCRIÇÃO (admin)
+    // =========================================================
+    // REJEITAR INSCRIÇÃO
+    // =========================================================
+
     @Transactional
-    public Participant rejeitarInscricao(Long eventId, Long participantId) {
+    public Participant rejeitarInscricao(
+            Long eventId,
+            Long participantId
+    ) {
 
-        Participant participant = buscarParticipanteAtivo(eventId, participantId);
+        Participant participant =
+                buscarParticipanteAtivo(eventId, participantId);
 
-        if (participant.getStatus() == Participant.Status.REJEITADO) {
-            throw new BusinessRuleException("Inscrição já está rejeitada");
+        if (participant.getStatus() ==
+                Participant.Status.REJEITADO) {
+
+            throw new BusinessRuleException(
+                    "Inscrição já rejeitada"
+            );
         }
 
-        participant.setStatus(Participant.Status.REJEITADO);
+        participant.setStatus(
+                Participant.Status.REJEITADO
+        );
 
-        Participant saved = participantRepository.save(participant);
+        Participant saved =
+                participantRepository.save(participant);
 
-        String subject = "Inscrição não aprovada — " + participant.getEvent().getTitle();
-        String html = "<h1>Inscrição não aprovada</h1>"
-                + "<p>Olá, " + saved.getName() + "!</p>"
-                + "<p>Infelizmente sua inscrição no evento <strong>" + saved.getEvent().getTitle() + "</strong> não foi aprovada.</p>";
+        String subject =
+                "Inscrição não aprovada — "
+                        + participant.getEvent().getTitle();
 
-        enviarEmailAposCommit(saved.getEmail(), subject, html);
+        String html =
+                "<h1>Inscrição não aprovada</h1>"
+                        + "<p>Olá, "
+                        + saved.getName()
+                        + "!</p>";
+
+        enviarEmailAposCommit(
+                saved.getEmail(),
+                subject,
+                html
+        );
 
         return saved;
     }
 
-    // MARCAR PRESENÇA (admin)
+    // =========================================================
+    // MARCAR PRESENÇA
+    // =========================================================
+
     @Transactional
-    public Participant marcarPresenca(Long eventId, Long participantId, Participant.Presenca presenca) {
+    public Participant marcarPresenca(
+            Long eventId,
+            Long participantId,
+            Participant.Presenca presenca
+    ) {
 
-        Participant participant = buscarParticipanteAtivo(eventId, participantId);
+        Participant participant =
+                buscarParticipanteAtivo(eventId, participantId);
 
-        if (participant.getStatus() != Participant.Status.APROVADO) {
-            throw new BusinessRuleException("Só é possível marcar presença de participantes aprovados");
+        if (participant.getStatus() !=
+                Participant.Status.APROVADO) {
+
+            throw new BusinessRuleException(
+                    "Participante não aprovado"
+            );
         }
 
         participant.setPresenca(presenca);
+
         return participantRepository.save(participant);
     }
 
-    // LISTAGEM COM FILTRO E ORDENAÇÃO
-    public List<Participant> listParticipantsForEvent(Long eventId, Participant.Status status, String orderBy) {
+    // =========================================================
+    // LISTAR PARTICIPANTES
+    // =========================================================
+
+    public List<Participant> listParticipantsForEvent(
+            Long eventId,
+            Participant.Status status,
+            String orderBy
+    ) {
 
         Sort sort = resolverOrdenacao(orderBy);
 
         if (status != null) {
-            return participantRepository.findByEventIdAndDeletedFalseAndStatus(eventId, status, sort);
+
+            return participantRepository
+                    .findByEventIdAndDeletedFalseAndStatus(
+                            eventId,
+                            status,
+                            sort
+                    );
         }
 
-        return participantRepository.findByEventIdAndDeletedFalse(eventId, sort);
+        return participantRepository
+                .findByEventIdAndDeletedFalse(
+                        eventId,
+                        sort
+                );
     }
-// BUSCA GERAL DE PARTICIPANTES
-    public List<Participant> searchParticipants(Long eventId, String termo) {
+
+    // =========================================================
+    // BUSCAR PARTICIPANTES
+    // =========================================================
+
+    public List<Participant> searchParticipants(
+            Long eventId,
+            String termo
+    ) {
+
         if (termo == null || termo.isBlank()) {
-            return participantRepository.findByEventIdAndDeletedFalse(eventId);
+
+            return participantRepository
+                    .findByEventIdAndDeletedFalse(eventId);
         }
-        return participantRepository.searchByTermo(eventId, termo.trim());
+
+        return participantRepository.searchByTermo(
+                eventId,
+                termo.trim()
+        );
     }
 
+    // =========================================================
     // REMOVER PARTICIPANTE
-    public void removeParticipantById(Long participantId) {
-        Participant participant = participantRepository.findById(participantId)
-                .orElseThrow(() -> new EntityNotFoundException("Participante não encontrado com id: " + participantId));
+    // =========================================================
 
-        if (participant.isDeleted()) {
-            throw new EntityNotFoundException("Participante não encontrado com id: " + participantId);
-        }
+    public void removeParticipantById(Long participantId) {
+
+        Participant participant =
+                participantRepository.findById(participantId)
+                        .orElseThrow(() ->
+                                new EntityNotFoundException(
+                                        "Participante não encontrado"
+                                ));
 
         participant.setDeleted(true);
+
         participantRepository.save(participant);
     }
 
+    // =========================================================
     // HELPERS
-    public boolean isEmailRegistered(Long eventId, String email) {
-        return participantRepository.existsByEventIdAndEmailAndDeletedFalse(eventId, email);
+    // =========================================================
+
+    public boolean isEmailRegistered(
+            Long eventId,
+            String email
+    ) {
+
+        return participantRepository
+                .existsByEventIdAndEmailAndDeletedFalse(
+                        eventId,
+                        email
+                );
     }
 
-    public List<Participant> listInscricoesByEmail(String email) {
-        return participantRepository.findByEmailAndDeletedFalse(email);
+    public List<Participant> listInscricoesByEmail(
+            String email
+    ) {
+
+        return participantRepository
+                .findByEmailAndDeletedFalse(email);
     }
 
-    public Participant findParticipantByEventAndEmail(Long eventId, String email) {
-        return participantRepository.findByEventIdAndEmailAndDeletedFalse(eventId, email)
-                .orElseThrow(() -> new EntityNotFoundException("Participante não encontrado para este evento"));
+    public Participant findParticipantByEventAndEmail(
+            Long eventId,
+            String email
+    ) {
+
+        return participantRepository
+                .findByEventIdAndEmailAndDeletedFalse(
+                        eventId,
+                        email
+                )
+                .orElseThrow(() ->
+                        new EntityNotFoundException(
+                                "Participante não encontrado"
+                        ));
     }
 
-    private Participant buscarParticipanteAtivo(Long eventId, Long participantId) {
-        Participant participant = participantRepository.findById(participantId)
-                .orElseThrow(() -> new EntityNotFoundException("Participante não encontrado com id: " + participantId));
+    private Participant buscarParticipanteAtivo(
+            Long eventId,
+            Long participantId
+    ) {
+
+        Participant participant =
+                participantRepository.findById(participantId)
+                        .orElseThrow(() ->
+                                new EntityNotFoundException(
+                                        "Participante não encontrado"
+                                ));
 
         if (participant.isDeleted()) {
-            throw new EntityNotFoundException("Participante não encontrado com id: " + participantId);
+
+            throw new EntityNotFoundException(
+                    "Participante removido"
+            );
         }
 
         if (!participant.getEvent().getId().equals(eventId)) {
-            throw new BusinessRuleException("Participante não pertence a este evento");
+
+            throw new BusinessRuleException(
+                    "Participante não pertence ao evento"
+            );
         }
 
         return participant;
     }
 
     private Sort resolverOrdenacao(String orderBy) {
-        if (orderBy == null) return Sort.unsorted();
+
+        if (orderBy == null) {
+            return Sort.unsorted();
+        }
+
         return switch (orderBy.toLowerCase()) {
-            case "nome"         -> Sort.by(Sort.Direction.ASC, "name");
-            case "datainscricao"-> Sort.by(Sort.Direction.DESC, "dataInscricao");
-            case "presenca"     -> Sort.by(Sort.Direction.ASC, "presenca");
-            default             -> Sort.unsorted();
+
+            case "nome" ->
+                    Sort.by(Sort.Direction.ASC, "name");
+
+            case "datainscricao" ->
+                    Sort.by(Sort.Direction.DESC, "dataInscricao");
+
+            case "presenca" ->
+                    Sort.by(Sort.Direction.ASC, "presenca");
+
+            default ->
+                    Sort.unsorted();
         };
     }
 
-    private void enviarEmailAposCommit(String email, String subject, String html) {
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    try {
-                        emailService.sendConfirmationEmail(email, subject, html);
-                    } catch (Exception e) {
-                        logger.error("Erro ao enviar email para {}", email, e);
-                    }
-                }
-            });
+    private void enviarEmailAposCommit(
+            String email,
+            String subject,
+            String html
+    ) {
+
+        if (TransactionSynchronizationManager
+                .isSynchronizationActive()) {
+
+            TransactionSynchronizationManager
+                    .registerSynchronization(
+                            new TransactionSynchronization() {
+
+                                @Override
+                                public void afterCommit() {
+
+                                    try {
+
+                                        emailService.sendConfirmationEmail(
+                                                email,
+                                                subject,
+                                                html
+                                        );
+
+                                    } catch (Exception e) {
+
+                                        logger.error(
+                                                "Erro ao enviar email",
+                                                e
+                                        );
+                                    }
+                                }
+                            });
+
         } else {
+
             try {
-                emailService.sendConfirmationEmail(email, subject, html);
+
+                emailService.sendConfirmationEmail(
+                        email,
+                        subject,
+                        html
+                );
+
             } catch (Exception e) {
-                logger.error("Erro ao enviar email para {}", email, e);
+
+                logger.error(
+                        "Erro ao enviar email",
+                        e
+                );
             }
         }
     }

@@ -26,6 +26,8 @@ public class Event {
     private boolean majority18;
     private String category;
     private boolean deleted = false;
+    @Column(columnDefinition = "TEXT")
+    private String imageUrl;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)

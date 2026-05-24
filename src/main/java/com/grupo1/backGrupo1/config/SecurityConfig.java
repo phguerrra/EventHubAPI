@@ -24,73 +24,247 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter
+    ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http
+    ) throws Exception {
+
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors ->
+                        cors.configurationSource(
+                                corsConfigurationSource()
+                        )
+                )
+
                 .csrf(csrf -> csrf.disable())
+
                 .authorizeHttpRequests(auth -> auth
+
+                        // =====================================================
+                        // SWAGGER
+                        // =====================================================
+
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html",
+                                "/swagger-ui.html"
+                        ).permitAll()
+
+                        // =====================================================
+                        // AUTH
+                        // =====================================================
+
+                        .requestMatchers(
                                 "/users/login",
                                 "/users/register",
                                 "/users/logout"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/events", "/events/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/events").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/events/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/events/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/events/*/participants").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/events/*/participants/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/events/*/participants").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/events/*/participants/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/avisos/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/avisos").authenticated()      // ← falta
-                        .requestMatchers(HttpMethod.DELETE, "/avisos/**").authenticated() // ← falta
-                        .requestMatchers(HttpMethod.GET, "/events/search").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/events/*/participants/search").hasRole("ADMIN")
-                        .requestMatchers("/palestrantes/**").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()
-                        .requestMatchers("/tickets/**").authenticated()
-                        .requestMatchers("/users/me").authenticated()
-                        .requestMatchers("/users/me/events").authenticated()
+
+                        // =====================================================
+                        // EVENTS
+                        // =====================================================
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/events",
+                                "/events/**"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/events"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/events/**"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/events/**"
+                        ).hasRole("ADMIN")
+
+                        // =====================================================
+                        // PARTICIPANTS
+                        // =====================================================
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/events/*/participants"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/events/*/participants/**"
+                        ).permitAll()
+
+                        // INSCREVER
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/events/*/participants"
+                        ).authenticated()
+
+                        // CANCELAR INSCRIÇÃO
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/events/*/participants/cancel"
+                        ).authenticated()
+
+                        // ADMIN PARTICIPANTS
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/events/*/participants/**"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/events/*/participants/search"
+                        ).hasRole("ADMIN")
+
+                        // =====================================================
+                        // AVISOS
+                        // =====================================================
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/avisos/**"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/avisos"
+                        ).authenticated()
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/avisos/**"
+                        ).authenticated()
+
+                        // =====================================================
+                        // SEARCH
+                        // =====================================================
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/events/search"
+                        ).permitAll()
+
+                        // =====================================================
+                        // PALESTRANTES
+                        // =====================================================
+
+                        .requestMatchers(
+                                "/palestrantes/**"
+                        ).permitAll()
+
+                        // =====================================================
+                        // UPLOADS
+                        // =====================================================
+
+                        .requestMatchers(
+                                "/uploads/**"
+                        ).permitAll()
+
+                        // =====================================================
+                        // TICKETS
+                        // =====================================================
+
+                        .requestMatchers(
+                                "/tickets/**"
+                        ).authenticated()
+
+                        // =====================================================
+                        // USER
+                        // =====================================================
+
+                        .requestMatchers(
+                                "/users/me"
+                        ).authenticated()
+
+                        .requestMatchers(
+                                "/users/me/events"
+                        ).authenticated()
+
+                        // =====================================================
+                        // RESTANTE
+                        // =====================================================
+
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
+
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+
+        config.setAllowedOrigins(
+                List.of("http://localhost:3000")
+        );
+
+        config.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "OPTIONS",
+                        "PATCH"
+                )
+        );
+
+        config.setAllowedHeaders(
+                List.of("*")
+        );
+
         config.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(
+                "/**",
+                config
+        );
+
         return source;
     }
 
     @Bean
-    public InMemoryUserDetailsManager users(PasswordEncoder passwordEncoder) {
+    public InMemoryUserDetailsManager users(
+            PasswordEncoder passwordEncoder
+    ) {
+
         UserDetails admin = User.builder()
                 .username("admin")
-                .password(passwordEncoder.encode("adminpass"))
+                .password(
+                        passwordEncoder.encode("adminpass")
+                )
                 .roles("ADMIN")
                 .build();
+
         return new InMemoryUserDetailsManager(admin);
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration configuration
+    ) throws Exception {
+
         return configuration.getAuthenticationManager();
     }
 }

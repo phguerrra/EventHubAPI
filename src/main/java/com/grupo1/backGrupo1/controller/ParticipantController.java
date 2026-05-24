@@ -27,123 +27,223 @@ public class ParticipantController {
     private final ParticipantService service;
     private final UserService userService;
 
-    public ParticipantController(ParticipantService service, UserService userService) {
+    public ParticipantController(
+            ParticipantService service,
+            UserService userService
+    ) {
         this.service = service;
         this.userService = userService;
     }
 
-    // GET /events/{eventId}/participants
+    // =========================================================
+    // LISTAR PARTICIPANTES
+    // =========================================================
+
     @GetMapping
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "Lista retornada")})
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista retornada")
+    })
     public ResponseEntity<List<Participant>> listParticipants(
             @PathVariable Long eventId,
             @RequestParam(required = false) Participant.Status status,
-            @RequestParam(required = false) String orderBy) {
+            @RequestParam(required = false) String orderBy
+    ) {
 
-        List<Participant> participants = service.listParticipantsForEvent(eventId, status, orderBy);
+        List<Participant> participants =
+                service.listParticipantsForEvent(eventId, status, orderBy);
+
         return ResponseEntity.ok(participants);
     }
 
-    // GET /events/{eventId}/participants/search?
+    // =========================================================
+    // BUSCAR PARTICIPANTES
+    // =========================================================
+
     @GetMapping("/search")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "Resultados retornados")})
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Resultados retornados")
+    })
     public ResponseEntity<List<Participant>> searchParticipants(
             @PathVariable Long eventId,
-            @RequestParam(required = false) String q) {
+            @RequestParam(required = false) String q
+    ) {
 
-        return ResponseEntity.ok(service.searchParticipants(eventId, q));
+        return ResponseEntity.ok(
+                service.searchParticipants(eventId, q)
+        );
     }
 
-    // POST /events/{eventId}/participants
+    // =========================================================
+    // INSCREVER PARTICIPANTE
+    // =========================================================
+
     @PostMapping
-    @Operation(summary = "Solicitar inscrição em evento (fica pendente até admin aprovar)")
+    @Operation(summary = "Solicitar inscrição em evento")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Solicitação registrada"),
             @ApiResponse(responseCode = "400", description = "Regra de negócio violada")
     })
     public ResponseEntity<?> registerParticipant(
             @PathVariable Long eventId,
-            Authentication authentication) {
+            Authentication authentication
+    ) {
 
         String email = authentication.getName();
+
         User user = userService.findByEmail(email);
 
-        Participant saved = service.registerForEvent(eventId, new Participant(), user.getId());
+        Participant saved =
+                service.registerForEvent(
+                        eventId,
+                        new Participant(),
+                        user.getId()
+                );
 
         Map<String, Object> resposta = new HashMap<>();
+
         resposta.put("id", saved.getId());
         resposta.put("participant", saved);
-        resposta.put("mensagem", "Solicitação de inscrição registrada. Aguarde a aprovação do administrador.");
+        resposta.put(
+                "mensagem",
+                "Solicitação de inscrição registrada. Aguarde aprovação."
+        );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(resposta);
     }
 
-    // PATCH /events/{eventId}/participants/{id}/aprovar
+    // =========================================================
+    // CANCELAR INSCRIÇÃO
+    // =========================================================
+
+    @DeleteMapping("/cancel")
+    @Operation(summary = "Cancelar inscrição do usuário logado")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Inscrição cancelada"),
+            @ApiResponse(responseCode = "404", description = "Inscrição não encontrada")
+    })
+    public ResponseEntity<?> cancelarInscricao(
+            @PathVariable Long eventId,
+            Authentication authentication
+    ) {
+
+        String email = authentication.getName();
+
+        service.cancelarInscricao(email, eventId);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "mensagem",
+                        "Inscrição cancelada com sucesso"
+                )
+        );
+    }
+
+    // =========================================================
+    // APROVAR INSCRIÇÃO
+    // =========================================================
+
     @PatchMapping("/{participantId}/aprovar")
-    @Operation(summary = "Aprovar inscrição de participante (admin)")
+    @Operation(summary = "Aprovar inscrição")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Inscrição aprovada"),
-            @ApiResponse(responseCode = "400", description = "Inscrição já aprovada ou evento lotado"),
+            @ApiResponse(responseCode = "400", description = "Evento lotado"),
             @ApiResponse(responseCode = "404", description = "Participante não encontrado")
     })
     public ResponseEntity<Participant> aprovar(
             @PathVariable Long eventId,
-            @PathVariable Long participantId) {
+            @PathVariable Long participantId
+    ) {
 
-        return ResponseEntity.ok(service.aprovarInscricao(eventId, participantId));
+        return ResponseEntity.ok(
+                service.aprovarInscricao(eventId, participantId)
+        );
     }
 
-    // PATCH /events/{eventId}/participants/{id}/rejeitar
+    // =========================================================
+    // REJEITAR INSCRIÇÃO
+    // =========================================================
+
     @PatchMapping("/{participantId}/rejeitar")
-    @Operation(summary = "Rejeitar inscrição de participante (admin)")
+    @Operation(summary = "Rejeitar inscrição")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Inscrição rejeitada"),
             @ApiResponse(responseCode = "404", description = "Participante não encontrado")
     })
     public ResponseEntity<Participant> rejeitar(
             @PathVariable Long eventId,
-            @PathVariable Long participantId) {
+            @PathVariable Long participantId
+    ) {
 
-        return ResponseEntity.ok(service.rejeitarInscricao(eventId, participantId));
+        return ResponseEntity.ok(
+                service.rejeitarInscricao(eventId, participantId)
+        );
     }
 
-    // PATCH /events/{eventId}/participants/{id}/presenca
+    // =========================================================
+    // MARCAR PRESENÇA
+    // =========================================================
+
     @PatchMapping("/{participantId}/presenca")
-    @Operation(summary = "Marcar presença de participante no evento (admin)")
+    @Operation(summary = "Marcar presença")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Presença registrada"),
-            @ApiResponse(responseCode = "400", description = "Participante não está aprovado"),
+            @ApiResponse(responseCode = "400", description = "Participante não aprovado"),
             @ApiResponse(responseCode = "404", description = "Participante não encontrado")
     })
     public ResponseEntity<Participant> marcarPresenca(
             @PathVariable Long eventId,
             @PathVariable Long participantId,
-            @RequestBody @Valid PresencaRequestDTO dto) {
+            @RequestBody @Valid PresencaRequestDTO dto
+    ) {
 
-        return ResponseEntity.ok(service.marcarPresenca(eventId, participantId, dto.getPresenca()));
+        return ResponseEntity.ok(
+                service.marcarPresenca(
+                        eventId,
+                        participantId,
+                        dto.getPresenca()
+                )
+        );
     }
 
-    // DELETE /events/{eventId}/participants/{id}
+    // =========================================================
+    // REMOVER PARTICIPANTE
+    // =========================================================
+
     @DeleteMapping("/{participantId}")
     @Operation(summary = "Remover participante")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Removido"),
             @ApiResponse(responseCode = "404", description = "Não encontrado")
     })
-    public ResponseEntity<?> removeParticipant(@PathVariable Long participantId) {
+    public ResponseEntity<?> removeParticipant(
+            @PathVariable Long participantId
+    ) {
+
         service.removeParticipantById(participantId);
+
         return ResponseEntity.noContent().build();
     }
 
-    // GET /events/{eventId}/participants/check-email
+    // =========================================================
+    // CHECAR EMAIL
+    // =========================================================
+
     @GetMapping("/check-email")
     @Operation(summary = "Checar se e-mail já está inscrito")
     public ResponseEntity<Map<String, Boolean>> checkEmailRegistered(
             @PathVariable Long eventId,
-            @RequestParam String email) {
+            @RequestParam String email
+    ) {
 
         Map<String, Boolean> resposta = new HashMap<>();
-        resposta.put("emailInscrito", service.isEmailRegistered(eventId, email));
+
+        resposta.put(
+                "emailInscrito",
+                service.isEmailRegistered(eventId, email)
+        );
+
         return ResponseEntity.ok(resposta);
     }
 }
