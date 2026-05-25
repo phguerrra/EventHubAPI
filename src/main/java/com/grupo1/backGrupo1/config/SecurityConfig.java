@@ -129,6 +129,19 @@ public class SecurityConfig {
                         ).hasRole("ADMIN")
 
                         // =====================================================
+                        // EVENT MATERIAL
+                        // =====================================================
+                        .requestMatchers(HttpMethod.GET,  "/events/*/materials"
+
+                        ).authenticated()
+                        .requestMatchers(HttpMethod.POST, "/events/*/materials"
+
+                        ).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/events/*/materials/*"
+
+                        ).hasRole("ADMIN")
+
+                        // =====================================================
                         // AVISOS
                         // =====================================================
 
