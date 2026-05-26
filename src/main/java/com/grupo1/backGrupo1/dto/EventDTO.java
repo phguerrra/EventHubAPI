@@ -32,6 +32,8 @@ public class EventDTO {
     // New field
     private String category;
 
+    private Boolean requiresApproval = false;
+
     public String getCategory(){
         return category;
     }
