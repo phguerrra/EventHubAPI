@@ -28,6 +28,8 @@ public class Event {
     private boolean deleted = false;
     @Column(columnDefinition = "TEXT")
     private String imageUrl;
+    @Column(columnDefinition = "BOOLEAN DEFAULT false")
+    private boolean requiresApproval = false;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)

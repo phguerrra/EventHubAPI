@@ -1,5 +1,6 @@
 package com.grupo1.backGrupo1.controller;
 
+import com.grupo1.backGrupo1.dto.ParticipantResponseDTO;
 import com.grupo1.backGrupo1.dto.PresencaRequestDTO;
 import com.grupo1.backGrupo1.model.Participant;
 import com.grupo1.backGrupo1.model.User;
@@ -43,7 +44,7 @@ public class ParticipantController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista retornada")
     })
-    public ResponseEntity<List<Participant>> listParticipants(
+    public ResponseEntity<List<ParticipantResponseDTO>> listParticipants(
             @PathVariable Long eventId,
             @RequestParam(required = false) Participant.Status status,
             @RequestParam(required = false) String orderBy
@@ -52,7 +53,20 @@ public class ParticipantController {
         List<Participant> participants =
                 service.listParticipantsForEvent(eventId, status, orderBy);
 
-        return ResponseEntity.ok(participants);
+        List<ParticipantResponseDTO> dtos = participants.stream()
+                .map(p -> new ParticipantResponseDTO(
+                        p.getId(),
+                        p.getName(),
+                        p.getEmail(),
+                        p.getPhone(),
+                        p.getCpf(),
+                        p.getStatus(),
+                        p.getDataInscricao(),
+                        p.getPresenca()
+                ))
+                .toList();
+
+        return ResponseEntity.ok(dtos);
     }
 
     // =========================================================
