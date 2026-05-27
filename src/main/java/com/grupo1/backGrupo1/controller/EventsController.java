@@ -90,6 +90,9 @@ public class EventsController {
     )
     public Event create(
 
+            @RequestParam(defaultValue = "false")
+            Boolean requiresApproval,
+
             @RequestParam String title,
 
             @RequestParam String description,
@@ -114,7 +117,6 @@ public class EventsController {
         Event event = new Event();
 
         event.setTitle(title);
-
         event.setDescription(description);
 
         event.setDate(
@@ -126,7 +128,6 @@ public class EventsController {
         );
 
         event.setLocation(location);
-
         event.setMaxParticipants(maxParticipants);
 
         event.setMajority18(
@@ -134,10 +135,7 @@ public class EventsController {
         );
 
         event.setCategory(category);
-
-        // =====================================================
-        // IMAGEM
-        // =====================================================
+        event.setRequiresApproval(Boolean.TRUE.equals(requiresApproval));
 
         if (image != null && !image.isEmpty()) {
 
@@ -183,6 +181,8 @@ public class EventsController {
     )
     public Event update(
 
+
+
             @PathVariable Long id,
 
             @RequestParam String title,
@@ -198,6 +198,9 @@ public class EventsController {
             @RequestParam Integer maxParticipants,
 
             @RequestParam Boolean majority18,
+
+            @RequestParam(defaultValue = "false")
+            Boolean requiresApproval,
 
             @RequestParam String category,
 
@@ -230,6 +233,10 @@ public class EventsController {
         );
 
         event.setCategory(category);
+
+        event.setRequiresApproval(
+                Boolean.TRUE.equals(requiresApproval)
+        );
 
         // =====================================================
         // NOVA IMAGEM
@@ -279,5 +286,8 @@ public class EventsController {
     ) {
 
         service.deleteById(id);
+
     }
+
+
 }

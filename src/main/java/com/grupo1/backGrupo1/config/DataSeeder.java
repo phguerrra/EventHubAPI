@@ -88,8 +88,32 @@ public class DataSeeder {
             event2.setMajority18(false);
             event2.setCategory("Esporte");
 
+            Event event3 = new Event();
+            event3.setTitle("teste");
+            event3.setDescription("teste");
+            event3.setDate(LocalDate.of(2026, 10, 16));
+            event3.setTime(LocalTime.of(14, 0));
+            event3.setLocation("LOCAL TESTE");
+            event3.setMaxParticipants(1);
+            event3.setMajority18(false);
+            event3.setCategory("Esporte");
+
+            Event event4 = new Event();
+            event4.setTitle("teste de evento finalizado");
+            event4.setDescription("teste");
+            event4.setDate(LocalDate.of(2026, 05, 16));
+            event4.setTime(LocalTime.of(14, 0));
+            event4.setLocation("teste de evento finalizado");
+            event4.setMaxParticipants(1);
+            event4.setMajority18(false);
+            event4.setCategory("Esporte");
+
+
+
             eventsRepository.save(event1);
             eventsRepository.save(event2);
+            eventsRepository.save(event3);
+            eventsRepository.save(event4);
 
             Participant participant = new Participant();
             participant.setName(user.getName());
@@ -98,6 +122,9 @@ public class DataSeeder {
             participant.setPhone("55999468981");
             participant.setEvent(event1);
 
+            participant.setStatus(Participant.Status.PENDENTE);
+            participant.setPresenca(Participant.Presenca.PENDENTE);
+
             Participant participant2 = new Participant();
             participant2.setName(user2.getName());
             participant2.setEmail(user2.getEmail());
@@ -105,8 +132,29 @@ public class DataSeeder {
             participant2.setPhone("55996387923");
             participant2.setEvent(event1);
 
+            Participant participant3 = new Participant();
+            participant3.setName(user3.getName());
+            participant3.setEmail(user3.getEmail());
+            participant3.setCpf(user3.getCpf());
+            participant3.setPhone("55996387943");
+            participant3.setEvent(event3);
+
+            Participant participant4 = new Participant();
+            participant4.setName(user.getName());
+            participant4.setEmail(user.getEmail());
+            participant4.setCpf(user.getCpf());
+            participant4.setPhone("55999999999");
+            participant4.setEvent(event4);
+
+            participant4.setStatus(Participant.Status.APROVADO);
+            participant4.setPresenca(Participant.Presenca.PENDENTE);
+
+            participantRepository.save(participant4);
+
             participantRepository.save(participant);
             participantRepository.save(participant2);
+            participantRepository.save(participant3);
+            participantRepository.save(participant4);
 
             System.out.println("Seed executada com sucesso!");
         };

@@ -114,13 +114,13 @@ public class ParticipantService {
         );
 
         participant.setEvent(event);
-
         if (event.isRequiresApproval()) {
             participant.setStatus(Participant.Status.PENDENTE);
         } else {
             participant.setStatus(Participant.Status.APROVADO);
-            participant.setDataInscricao(LocalDateTime.now());
         }
+
+        participant.setDataInscricao(LocalDateTime.now());
 
         participant.setPresenca(Participant.Presenca.PENDENTE);
 
