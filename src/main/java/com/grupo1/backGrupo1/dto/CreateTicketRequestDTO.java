@@ -6,8 +6,12 @@ import jakarta.validation.constraints.NotNull;
 
 @Data
 public class CreateTicketRequestDTO {
+
     @NotNull
     private Long eventId;
+
+    @NotNull(message = "Id do participante é obrigatório")
+    private Long participantId;
 
     @Min(1)
     private Long expirationMinutes = 60L;

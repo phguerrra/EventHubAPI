@@ -4,9 +4,12 @@ import com.grupo1.backGrupo1.dto.CreateTicketRequestDTO;
 import com.grupo1.backGrupo1.dto.TicketResponseDTO;
 import com.grupo1.backGrupo1.dto.ValidacaoRequestDTO;
 import com.grupo1.backGrupo1.service.TicketService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/tickets")
@@ -14,19 +17,32 @@ import org.springframework.web.bind.annotation.*;
 public class TicketController {
 
     private final TicketService ticketService;
+
     public TicketController(TicketService ticketService) {
         this.ticketService = ticketService;
     }
 
+    // Cria o ingresso vinculado a um participante específico
     @PostMapping
-    public ResponseEntity<TicketResponseDTO> createTicket(@RequestBody CreateTicketRequestDTO req) {
-        TicketResponseDTO resp = ticketService.createTicket(req.getEventId(), req.getExpirationMinutes());
+    public ResponseEntity<TicketResponseDTO> createTicket(
+            @RequestBody @Valid CreateTicketRequestDTO req
+    ) {
+        TicketResponseDTO resp = ticketService.createTicket(
+                req.getEventId(),
+                req.getParticipantId(),
+                req.getExpirationMinutes()
+        );
         return ResponseEntity.ok(resp);
     }
 
+    // Valida o QR e marca presença do participante automaticamente
     @PostMapping("/validar")
-    public ResponseEntity<?> validarTicket(@RequestBody ValidacaoRequestDTO req) {
+    public ResponseEntity<?> validarTicket(
+            @RequestBody @Valid ValidacaoRequestDTO req
+    ) {
         ticketService.validateAndUseTicket(req.getToken());
-        return ResponseEntity.ok().body(java.util.Map.of("message", "Ticket válido e marcado como usado"));
+        return ResponseEntity.ok(
+                Map.of("message", "Ticket válido, presença registrada com sucesso")
+        );
     }
 }

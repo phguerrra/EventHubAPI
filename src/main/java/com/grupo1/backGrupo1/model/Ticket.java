@@ -20,6 +20,9 @@ public class Ticket {
     private Long eventId;
 
     @Column(nullable = false)
+    private Long participantId;
+
+    @Column(nullable = false)
     private boolean usado = false;
 
     @Column(nullable = false)

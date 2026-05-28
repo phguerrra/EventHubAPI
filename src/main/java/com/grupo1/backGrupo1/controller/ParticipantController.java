@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @Tag(name = "Participants", description = "Operações relacionadas a participantes")
@@ -28,10 +29,7 @@ public class ParticipantController {
     private final ParticipantService service;
     private final UserService userService;
 
-    public ParticipantController(
-            ParticipantService service,
-            UserService userService
-    ) {
+    public ParticipantController(ParticipantService service, UserService userService) {
         this.service = service;
         this.userService = userService;
     }
@@ -41,32 +39,16 @@ public class ParticipantController {
     // =========================================================
 
     @GetMapping
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Lista retornada")
-    })
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Lista retornada")})
     public ResponseEntity<List<ParticipantResponseDTO>> listParticipants(
             @PathVariable Long eventId,
             @RequestParam(required = false) Participant.Status status,
             @RequestParam(required = false) String orderBy
     ) {
-
-        List<Participant> participants =
-                service.listParticipantsForEvent(eventId, status, orderBy);
-
-        List<ParticipantResponseDTO> dtos = participants.stream()
-                .map(p -> new ParticipantResponseDTO(
-                        p.getId(),
-                        p.getName(),
-                        p.getEmail(),
-                        p.getPhone(),
-                        p.getCpf(),
-                        p.getStatus(),
-                        p.getDataInscricao(),
-                        p.getPresenca()
-                ))
-                .toList();
-
-        return ResponseEntity.ok(dtos);
+        return ResponseEntity.ok(
+                service.listParticipantsForEvent(eventId, status, orderBy)
+                        .stream().map(this::toDTO).collect(Collectors.toList())
+        );
     }
 
     // =========================================================
@@ -74,16 +56,14 @@ public class ParticipantController {
     // =========================================================
 
     @GetMapping("/search")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Resultados retornados")
-    })
-    public ResponseEntity<List<Participant>> searchParticipants(
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Resultados retornados")})
+    public ResponseEntity<List<ParticipantResponseDTO>> searchParticipants(
             @PathVariable Long eventId,
             @RequestParam(required = false) String q
     ) {
-
         return ResponseEntity.ok(
                 service.searchParticipants(eventId, q)
+                        .stream().map(this::toDTO).collect(Collectors.toList())
         );
     }
 
@@ -101,30 +81,17 @@ public class ParticipantController {
             @PathVariable Long eventId,
             Authentication authentication
     ) {
-
         String email = authentication.getName();
-
         User user = userService.findByEmail(email);
 
-        Participant saved =
-                service.registerForEvent(
-                        eventId,
-                        new Participant(),
-                        user.getId()
-                );
+        Participant saved = service.registerForEvent(eventId, new Participant(), user.getId());
 
         Map<String, Object> resposta = new HashMap<>();
-
         resposta.put("id", saved.getId());
-        resposta.put("participant", saved);
-        resposta.put(
-                "mensagem",
-                "Solicitação de inscrição registrada. Aguarde aprovação."
-        );
+        resposta.put("participant", toDTO(saved));
+        resposta.put("mensagem", "Solicitação de inscrição registrada. Aguarde aprovação.");
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(resposta);
+        return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
     }
 
     // =========================================================
@@ -141,17 +108,8 @@ public class ParticipantController {
             @PathVariable Long eventId,
             Authentication authentication
     ) {
-
-        String email = authentication.getName();
-
-        service.cancelarInscricao(email, eventId);
-
-        return ResponseEntity.ok(
-                Map.of(
-                        "mensagem",
-                        "Inscrição cancelada com sucesso"
-                )
-        );
+        service.cancelarInscricao(authentication.getName(), eventId);
+        return ResponseEntity.ok(Map.of("mensagem", "Inscrição cancelada com sucesso"));
     }
 
     // =========================================================
@@ -165,14 +123,11 @@ public class ParticipantController {
             @ApiResponse(responseCode = "400", description = "Evento lotado"),
             @ApiResponse(responseCode = "404", description = "Participante não encontrado")
     })
-    public ResponseEntity<Participant> aprovar(
+    public ResponseEntity<ParticipantResponseDTO> aprovar(
             @PathVariable Long eventId,
             @PathVariable Long participantId
     ) {
-
-        return ResponseEntity.ok(
-                service.aprovarInscricao(eventId, participantId)
-        );
+        return ResponseEntity.ok(toDTO(service.aprovarInscricao(eventId, participantId)));
     }
 
     // =========================================================
@@ -185,14 +140,11 @@ public class ParticipantController {
             @ApiResponse(responseCode = "200", description = "Inscrição rejeitada"),
             @ApiResponse(responseCode = "404", description = "Participante não encontrado")
     })
-    public ResponseEntity<Participant> rejeitar(
+    public ResponseEntity<ParticipantResponseDTO> rejeitar(
             @PathVariable Long eventId,
             @PathVariable Long participantId
     ) {
-
-        return ResponseEntity.ok(
-                service.rejeitarInscricao(eventId, participantId)
-        );
+        return ResponseEntity.ok(toDTO(service.rejeitarInscricao(eventId, participantId)));
     }
 
     // =========================================================
@@ -206,18 +158,13 @@ public class ParticipantController {
             @ApiResponse(responseCode = "400", description = "Participante não aprovado"),
             @ApiResponse(responseCode = "404", description = "Participante não encontrado")
     })
-    public ResponseEntity<Participant> marcarPresenca(
+    public ResponseEntity<ParticipantResponseDTO> marcarPresenca(
             @PathVariable Long eventId,
             @PathVariable Long participantId,
             @RequestBody @Valid PresencaRequestDTO dto
     ) {
-
         return ResponseEntity.ok(
-                service.marcarPresenca(
-                        eventId,
-                        participantId,
-                        dto.getPresenca()
-                )
+                toDTO(service.marcarPresenca(eventId, participantId, dto.getPresenca()))
         );
     }
 
@@ -231,12 +178,8 @@ public class ParticipantController {
             @ApiResponse(responseCode = "204", description = "Removido"),
             @ApiResponse(responseCode = "404", description = "Não encontrado")
     })
-    public ResponseEntity<?> removeParticipant(
-            @PathVariable Long participantId
-    ) {
-
+    public ResponseEntity<?> removeParticipant(@PathVariable Long participantId) {
         service.removeParticipantById(participantId);
-
         return ResponseEntity.noContent().build();
     }
 
@@ -250,14 +193,25 @@ public class ParticipantController {
             @PathVariable Long eventId,
             @RequestParam String email
     ) {
-
-        Map<String, Boolean> resposta = new HashMap<>();
-
-        resposta.put(
-                "emailInscrito",
-                service.isEmailRegistered(eventId, email)
+        return ResponseEntity.ok(
+                Map.of("emailInscrito", service.isEmailRegistered(eventId, email))
         );
+    }
 
-        return ResponseEntity.ok(resposta);
+    // =========================================================
+    // HELPER — converte entidade para DTO
+    // =========================================================
+
+    private ParticipantResponseDTO toDTO(Participant p) {
+        return new ParticipantResponseDTO(
+                p.getId(),
+                p.getName(),
+                p.getEmail(),
+                p.getPhone(),
+                p.getCpf(),
+                p.getStatus(),
+                p.getDataInscricao(),
+                p.getPresenca()
+        );
     }
 }

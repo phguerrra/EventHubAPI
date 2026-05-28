@@ -189,9 +189,9 @@ public class SecurityConfig {
                         // TICKETS
                         // =====================================================
 
-                        .requestMatchers(
-                                "/tickets/**"
-                        ).authenticated()
+                        .requestMatchers(HttpMethod.POST, "/tickets/validar").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/tickets").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,  "/tickets/**").hasRole("ADMIN")
 
                         // =====================================================
                         // USER

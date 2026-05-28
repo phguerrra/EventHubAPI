@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -17,15 +18,31 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final TicketJwtService jwtService;
     private final QrCodeService qrCodeService;
+    private final ParticipantService participantService;
 
-    public TicketService(TicketRepository ticketRepository, TicketJwtService jwtService, QrCodeService qrCodeService) {
+    public TicketService(
+            TicketRepository ticketRepository,
+            TicketJwtService jwtService,
+            QrCodeService qrCodeService,
+            ParticipantService participantService
+    ) {
         this.ticketRepository = ticketRepository;
         this.jwtService = jwtService;
         this.qrCodeService = qrCodeService;
+        this.participantService = participantService;
     }
 
+    // =========================================================
+    // CRIAR TICKET
+    // Recebe o id do participante para vincular ao ingresso
+    // =========================================================
+
     @Transactional
-    public TicketResponseDTO createTicket(Long eventId, long expirationMinutes) {
+    public TicketResponseDTO createTicket(
+            Long eventId,
+            Long participantId,
+            long expirationMinutes
+    ) {
         String ticketUuid = UUID.randomUUID().toString();
         long expirationMillis = expirationMinutes * 60 * 1000;
         String token = jwtService.generateToken(ticketUuid, eventId, expirationMillis);
@@ -33,6 +50,7 @@ public class TicketService {
         Ticket ticket = new Ticket();
         ticket.setTicketId(ticketUuid);
         ticket.setEventId(eventId);
+        ticket.setParticipantId(participantId);
         ticket.setUsado(false);
         ticket.setDataCriacao(Instant.now());
         ticketRepository.save(ticket);
@@ -41,19 +59,26 @@ public class TicketService {
         return new TicketResponseDTO(ticketUuid, eventId, token, qrBase64);
     }
 
+    // VALIDAR TICKET E MARCAR PRESENÇA
+    // Quando o admin escaneia o QR, marca o ticket como usado
+    // e atualiza a presença do participante para PRESENTE
     @Transactional
     public void validateAndUseTicket(String token) {
-        java.util.Map<String, Object> payload = jwtService.validateTokenAndGetPayload(token);
+        Map<String, Object> payload = jwtService.validateTokenAndGetPayload(token);
         String ticketId = payload.get("sub").toString();
 
-        Ticket t = ticketRepository.findByTicketId(ticketId)
+        Ticket ticket = ticketRepository.findByTicketId(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException("Ticket não encontrado"));
 
-        if (t.isUsado()) {
+        if (ticket.isUsado()) {
             throw new TicketAlreadyUsedException("Ticket já utilizado");
         }
 
-        t.setUsado(true);
-        ticketRepository.save(t);
+        // Marca o ingresso como usado
+        ticket.setUsado(true);
+        ticketRepository.save(ticket);
+
+        // Marca o participante como PRESENTE
+        participantService.marcarPresencaPorId(ticket.getParticipantId());
     }
 }

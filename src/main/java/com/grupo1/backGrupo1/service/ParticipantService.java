@@ -105,15 +105,10 @@ public class ParticipantService {
 
         participant.setName(user.getName());
         participant.setEmail(user.getEmail());
-        participant.setCpf(
-                user.getCpf() != null ? user.getCpf() : ""
-        );
-
-        participant.setPhone(
-                user.getPhone() != null ? user.getPhone() : ""
-        );
-
+        participant.setCpf(user.getCpf() != null ? user.getCpf() : "");
+        participant.setPhone(user.getPhone() != null ? user.getPhone() : "");
         participant.setEvent(event);
+
         if (event.isRequiresApproval()) {
             participant.setStatus(Participant.Status.PENDENTE);
         } else {
@@ -121,7 +116,6 @@ public class ParticipantService {
         }
 
         participant.setDataInscricao(LocalDateTime.now());
-
         participant.setPresenca(Participant.Presenca.PENDENTE);
 
         return participantRepository.save(participant);
@@ -132,24 +126,15 @@ public class ParticipantService {
     // =========================================================
 
     @Transactional
-    public void cancelarInscricao(
-            String email,
-            Long eventId
-    ) {
+    public void cancelarInscricao(String email, Long eventId) {
 
         Participant participant =
                 participantRepository
-                        .findByEventIdAndEmailAndDeletedFalse(
-                                eventId,
-                                email
-                        )
+                        .findByEventIdAndEmailAndDeletedFalse(eventId, email)
                         .orElseThrow(() ->
-                                new EntityNotFoundException(
-                                        "Inscrição não encontrada"
-                                ));
+                                new EntityNotFoundException("Inscrição não encontrada"));
 
         participant.setDeleted(true);
-
         participantRepository.save(participant);
     }
 
@@ -158,70 +143,39 @@ public class ParticipantService {
     // =========================================================
 
     @Transactional
-    public Participant aprovarInscricao(
-            Long eventId,
-            Long participantId
-    ) {
+    public Participant aprovarInscricao(Long eventId, Long participantId) {
 
-        Participant participant =
-                buscarParticipanteAtivo(eventId, participantId);
+        Participant participant = buscarParticipanteAtivo(eventId, participantId);
 
-        if (participant.getStatus() ==
-                Participant.Status.APROVADO) {
-
-            throw new BusinessRuleException(
-                    "Inscrição já aprovada"
-            );
+        if (participant.getStatus() == Participant.Status.APROVADO) {
+            throw new BusinessRuleException("Inscrição já aprovada");
         }
 
-        if (participant.getStatus() ==
-                Participant.Status.REJEITADO) {
-
-            throw new BusinessRuleException(
-                    "Inscrição rejeitada"
-            );
+        if (participant.getStatus() == Participant.Status.REJEITADO) {
+            throw new BusinessRuleException("Inscrição rejeitada");
         }
 
         long totalAprovados =
-                participantRepository
-                        .countByEventIdAndDeletedFalseAndStatus(
-                                eventId,
-                                Participant.Status.APROVADO
-                        );
+                participantRepository.countByEventIdAndDeletedFalseAndStatus(
+                        eventId, Participant.Status.APROVADO);
 
-        if (totalAprovados >=
-                participant.getEvent().getMaxParticipants()) {
-
-            throw new BusinessRuleException(
-                    "Evento lotado"
-            );
+        if (totalAprovados >= participant.getEvent().getMaxParticipants()) {
+            throw new BusinessRuleException("Evento lotado");
         }
 
         participant.setStatus(Participant.Status.APROVADO);
-
         participant.setDataInscricao(LocalDateTime.now());
 
-        Participant saved =
-                participantRepository.save(participant);
+        Participant saved = participantRepository.save(participant);
 
-        String subject =
-                "Inscrição aprovada — "
-                        + participant.getEvent().getTitle();
+        String subject = "Inscrição aprovada — " + participant.getEvent().getTitle();
+        String html = "<h1>Inscrição aprovada!</h1>"
+                + "<p>Olá, " + saved.getName() + "!</p>"
+                + "<p>Sua inscrição no evento <strong>"
+                + saved.getEvent().getTitle()
+                + "</strong> foi aprovada.</p>";
 
-        String html =
-                "<h1>Inscrição aprovada!</h1>"
-                        + "<p>Olá, "
-                        + saved.getName()
-                        + "!</p>"
-                        + "<p>Sua inscrição no evento <strong>"
-                        + saved.getEvent().getTitle()
-                        + "</strong> foi aprovada.</p>";
-
-        enviarEmailAposCommit(
-                saved.getEmail(),
-                subject,
-                html
-        );
+        enviarEmailAposCommit(saved.getEmail(), subject, html);
 
         return saved;
     }
@@ -231,44 +185,23 @@ public class ParticipantService {
     // =========================================================
 
     @Transactional
-    public Participant rejeitarInscricao(
-            Long eventId,
-            Long participantId
-    ) {
+    public Participant rejeitarInscricao(Long eventId, Long participantId) {
 
-        Participant participant =
-                buscarParticipanteAtivo(eventId, participantId);
+        Participant participant = buscarParticipanteAtivo(eventId, participantId);
 
-        if (participant.getStatus() ==
-                Participant.Status.REJEITADO) {
-
-            throw new BusinessRuleException(
-                    "Inscrição já rejeitada"
-            );
+        if (participant.getStatus() == Participant.Status.REJEITADO) {
+            throw new BusinessRuleException("Inscrição já rejeitada");
         }
 
-        participant.setStatus(
-                Participant.Status.REJEITADO
-        );
+        participant.setStatus(Participant.Status.REJEITADO);
 
-        Participant saved =
-                participantRepository.save(participant);
+        Participant saved = participantRepository.save(participant);
 
-        String subject =
-                "Inscrição não aprovada — "
-                        + participant.getEvent().getTitle();
+        String subject = "Inscrição não aprovada — " + participant.getEvent().getTitle();
+        String html = "<h1>Inscrição não aprovada</h1>"
+                + "<p>Olá, " + saved.getName() + "!</p>";
 
-        String html =
-                "<h1>Inscrição não aprovada</h1>"
-                        + "<p>Olá, "
-                        + saved.getName()
-                        + "!</p>";
-
-        enviarEmailAposCommit(
-                saved.getEmail(),
-                subject,
-                html
-        );
+        enviarEmailAposCommit(saved.getEmail(), subject, html);
 
         return saved;
     }
@@ -284,18 +217,41 @@ public class ParticipantService {
             Participant.Presenca presenca
     ) {
 
-        Participant participant =
-                buscarParticipanteAtivo(eventId, participantId);
+        Participant participant = buscarParticipanteAtivo(eventId, participantId);
 
-        if (participant.getStatus() !=
-                Participant.Status.APROVADO) {
-
-            throw new BusinessRuleException(
-                    "Participante não aprovado"
-            );
+        if (participant.getStatus() != Participant.Status.APROVADO) {
+            throw new BusinessRuleException("Participante não aprovado");
         }
 
         participant.setPresenca(presenca);
+
+        return participantRepository.save(participant);
+    }
+
+    // =========================================================
+    // MARCAR PRESENÇA POR ID (chamado pelo TicketService ao validar QR)
+    // =========================================================
+
+    /**
+     * Busca o participante diretamente pelo id e marca PRESENTE.
+     * Chamado internamente quando o QR Code é validado com sucesso.
+     */
+    @Transactional
+    public Participant marcarPresencaPorId(Long participantId) {
+
+        Participant participant = participantRepository.findById(participantId)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Participante não encontrado"));
+
+        if (participant.isDeleted()) {
+            throw new EntityNotFoundException("Participante removido");
+        }
+
+        if (participant.getStatus() != Participant.Status.APROVADO) {
+            throw new BusinessRuleException("Participante não está com inscrição aprovada");
+        }
+
+        participant.setPresenca(Participant.Presenca.PRESENTE);
 
         return participantRepository.save(participant);
     }
@@ -313,41 +269,24 @@ public class ParticipantService {
         Sort sort = resolverOrdenacao(orderBy);
 
         if (status != null) {
-
             return participantRepository
-                    .findByEventIdAndDeletedFalseAndStatus(
-                            eventId,
-                            status,
-                            sort
-                    );
+                    .findByEventIdAndDeletedFalseAndStatus(eventId, status, sort);
         }
 
-        return participantRepository
-                .findByEventIdAndDeletedFalse(
-                        eventId,
-                        sort
-                );
+        return participantRepository.findByEventIdAndDeletedFalse(eventId, sort);
     }
 
     // =========================================================
     // BUSCAR PARTICIPANTES
     // =========================================================
 
-    public List<Participant> searchParticipants(
-            Long eventId,
-            String termo
-    ) {
+    public List<Participant> searchParticipants(Long eventId, String termo) {
 
         if (termo == null || termo.isBlank()) {
-
-            return participantRepository
-                    .findByEventIdAndDeletedFalse(eventId);
+            return participantRepository.findByEventIdAndDeletedFalse(eventId);
         }
 
-        return participantRepository.searchByTermo(
-                eventId,
-                termo.trim()
-        );
+        return participantRepository.searchByTermo(eventId, termo.trim());
     }
 
     // =========================================================
@@ -356,15 +295,11 @@ public class ParticipantService {
 
     public void removeParticipantById(Long participantId) {
 
-        Participant participant =
-                participantRepository.findById(participantId)
-                        .orElseThrow(() ->
-                                new EntityNotFoundException(
-                                        "Participante não encontrado"
-                                ));
+        Participant participant = participantRepository.findById(participantId)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Participante não encontrado"));
 
         participant.setDeleted(true);
-
         participantRepository.save(participant);
     }
 
@@ -372,66 +307,34 @@ public class ParticipantService {
     // HELPERS
     // =========================================================
 
-    public boolean isEmailRegistered(
-            Long eventId,
-            String email
-    ) {
-
+    public boolean isEmailRegistered(Long eventId, String email) {
         return participantRepository
-                .existsByEventIdAndEmailAndDeletedFalse(
-                        eventId,
-                        email
-                );
+                .existsByEventIdAndEmailAndDeletedFalse(eventId, email);
     }
 
-    public List<Participant> listInscricoesByEmail(
-            String email
-    ) {
-
-        return participantRepository
-                .findByEmailAndDeletedFalse(email);
+    public List<Participant> listInscricoesByEmail(String email) {
+        return participantRepository.findByEmailAndDeletedFalse(email);
     }
 
-    public Participant findParticipantByEventAndEmail(
-            Long eventId,
-            String email
-    ) {
-
+    public Participant findParticipantByEventAndEmail(Long eventId, String email) {
         return participantRepository
-                .findByEventIdAndEmailAndDeletedFalse(
-                        eventId,
-                        email
-                )
+                .findByEventIdAndEmailAndDeletedFalse(eventId, email)
                 .orElseThrow(() ->
-                        new EntityNotFoundException(
-                                "Participante não encontrado"
-                        ));
+                        new EntityNotFoundException("Participante não encontrado"));
     }
 
-    private Participant buscarParticipanteAtivo(
-            Long eventId,
-            Long participantId
-    ) {
+    private Participant buscarParticipanteAtivo(Long eventId, Long participantId) {
 
-        Participant participant =
-                participantRepository.findById(participantId)
-                        .orElseThrow(() ->
-                                new EntityNotFoundException(
-                                        "Participante não encontrado"
-                                ));
+        Participant participant = participantRepository.findById(participantId)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Participante não encontrado"));
 
         if (participant.isDeleted()) {
-
-            throw new EntityNotFoundException(
-                    "Participante removido"
-            );
+            throw new EntityNotFoundException("Participante removido");
         }
 
         if (!participant.getEvent().getId().equals(eventId)) {
-
-            throw new BusinessRuleException(
-                    "Participante não pertence ao evento"
-            );
+            throw new BusinessRuleException("Participante não pertence ao evento");
         }
 
         return participant;
@@ -444,71 +347,34 @@ public class ParticipantService {
         }
 
         return switch (orderBy.toLowerCase()) {
-
-            case "nome" ->
-                    Sort.by(Sort.Direction.ASC, "name");
-
-            case "datainscricao" ->
-                    Sort.by(Sort.Direction.DESC, "dataInscricao");
-
-            case "presenca" ->
-                    Sort.by(Sort.Direction.ASC, "presenca");
-
-            default ->
-                    Sort.unsorted();
+            case "nome"          -> Sort.by(Sort.Direction.ASC,  "name");
+            case "datainscricao" -> Sort.by(Sort.Direction.DESC, "dataInscricao");
+            case "presenca"      -> Sort.by(Sort.Direction.ASC,  "presenca");
+            default              -> Sort.unsorted();
         };
     }
 
-    private void enviarEmailAposCommit(
-            String email,
-            String subject,
-            String html
-    ) {
+    private void enviarEmailAposCommit(String email, String subject, String html) {
 
-        if (TransactionSynchronizationManager
-                .isSynchronizationActive()) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
 
-            TransactionSynchronizationManager
-                    .registerSynchronization(
-                            new TransactionSynchronization() {
-
-                                @Override
-                                public void afterCommit() {
-
-                                    try {
-
-                                        emailService.sendConfirmationEmail(
-                                                email,
-                                                subject,
-                                                html
-                                        );
-
-                                    } catch (Exception e) {
-
-                                        logger.error(
-                                                "Erro ao enviar email",
-                                                e
-                                        );
-                                    }
-                                }
-                            });
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            try {
+                                emailService.sendConfirmationEmail(email, subject, html);
+                            } catch (Exception e) {
+                                logger.error("Erro ao enviar email", e);
+                            }
+                        }
+                    });
 
         } else {
-
             try {
-
-                emailService.sendConfirmationEmail(
-                        email,
-                        subject,
-                        html
-                );
-
+                emailService.sendConfirmationEmail(email, subject, html);
             } catch (Exception e) {
-
-                logger.error(
-                        "Erro ao enviar email",
-                        e
-                );
+                logger.error("Erro ao enviar email", e);
             }
         }
     }
