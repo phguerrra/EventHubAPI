@@ -37,7 +37,6 @@ public class EventsController {
     public List<Event> listAll(
             @RequestParam(required = false) String category
     ) {
-
         return service.listAll(category);
     }
 
@@ -47,15 +46,11 @@ public class EventsController {
 
     @GetMapping("/search")
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Resultados retornados"
-            )
+            @ApiResponse(responseCode = "200", description = "Resultados retornados")
     })
     public List<Event> search(
             @RequestParam(required = false) String q
     ) {
-
         return service.search(q);
     }
 
@@ -64,10 +59,7 @@ public class EventsController {
     // =========================================================
 
     @GetMapping("/{id}")
-    public Event getById(
-            @PathVariable Long id
-    ) {
-
+    public Event getById(@PathVariable Long id) {
         return service.getById(id);
     }
 
@@ -77,7 +69,6 @@ public class EventsController {
 
     @GetMapping("/categories")
     public List<String> listCategories() {
-
         return service.listCategories();
     }
 
@@ -85,192 +76,74 @@ public class EventsController {
     // CRIAR EVENTO
     // =========================================================
 
-    @PostMapping(
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Event create(
-
-            @RequestParam(defaultValue = "false")
-            Boolean requiresApproval,
-
             @RequestParam String title,
-
-            @RequestParam String description,
-
+            @RequestParam(required = false) String description,
             @RequestParam String date,
-
             @RequestParam String time,
-
             @RequestParam String location,
-
             @RequestParam Integer maxParticipants,
-
-            @RequestParam Boolean majority18,
-
+            @RequestParam(defaultValue = "false") Boolean majority18,
             @RequestParam String category,
-
-            @RequestParam(required = false)
-            MultipartFile image
-
+            @RequestParam(defaultValue = "false") Boolean requiresApproval,
+            @RequestParam(required = false) MultipartFile image
     ) throws Exception {
 
         Event event = new Event();
-
         event.setTitle(title);
         event.setDescription(description);
-
-        event.setDate(
-                java.time.LocalDate.parse(date)
-        );
-
-        event.setTime(
-                java.time.LocalTime.parse(time)
-        );
-
+        event.setDate(java.time.LocalDate.parse(date));
+        event.setTime(java.time.LocalTime.parse(time));
         event.setLocation(location);
         event.setMaxParticipants(maxParticipants);
-
-        event.setMajority18(
-                Boolean.TRUE.equals(majority18)
-        );
-
+        event.setMajority18(Boolean.TRUE.equals(majority18));
         event.setCategory(category);
         event.setRequiresApproval(Boolean.TRUE.equals(requiresApproval));
 
         if (image != null && !image.isEmpty()) {
-
-            String uploadDir = "uploads/";
-
-            File dir = new File(uploadDir);
-
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-
-            String fileName =
-                    UUID.randomUUID()
-                            + "_"
-                            + image.getOriginalFilename();
-
-            Path filePath =
-                    Paths.get(uploadDir, fileName);
-
-            Files.copy(
-                    image.getInputStream(),
-                    filePath,
-                    StandardCopyOption.REPLACE_EXISTING
-            );
-
-            String imageUrl =
-                    "http://localhost:8080/uploads/"
-                            + fileName;
-
-            event.setImageUrl(imageUrl);
+            event.setImageUrl(saveImage(image));
         }
 
         return service.saveEvent(event);
     }
 
     // =========================================================
-    // EDITAR EVENTO
+    // EDITAR EVENTO — atualiza só os campos enviados
     // =========================================================
 
-    @PutMapping(
-            value = "/{id}",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
+    @PatchMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Event update(
-
-
-
             @PathVariable Long id,
-
-            @RequestParam String title,
-
-            @RequestParam String description,
-
-            @RequestParam String date,
-
-            @RequestParam String time,
-
-            @RequestParam String location,
-
-            @RequestParam Integer maxParticipants,
-
-            @RequestParam Boolean majority18,
-
-            @RequestParam(defaultValue = "false")
-            Boolean requiresApproval,
-
-            @RequestParam String category,
-
-            @RequestParam(required = false)
-            MultipartFile image
-
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) String time,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) Integer maxParticipants,
+            @RequestParam(required = false) Boolean majority18,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) Boolean requiresApproval,
+            @RequestParam(required = false) MultipartFile image
     ) throws Exception {
 
-        Event event =
-                service.getById(id);
+        // Busca o evento existente — mantém todos os valores atuais
+        Event event = service.getById(id);
 
-        event.setTitle(title);
+        // Só atualiza o campo se vier na requisição
+        if (title != null && !title.isBlank())       event.setTitle(title);
+        if (description != null)                      event.setDescription(description);
+        if (date != null)                             event.setDate(java.time.LocalDate.parse(date));
+        if (time != null)                             event.setTime(java.time.LocalTime.parse(time));
+        if (location != null && !location.isBlank())  event.setLocation(location);
+        if (maxParticipants != null)                  event.setMaxParticipants(maxParticipants);
+        if (majority18 != null)                       event.setMajority18(majority18);
+        if (category != null && !category.isBlank())  event.setCategory(category);
+        if (requiresApproval != null)                 event.setRequiresApproval(requiresApproval);
 
-        event.setDescription(description);
-
-        event.setDate(
-                java.time.LocalDate.parse(date)
-        );
-
-        event.setTime(
-                java.time.LocalTime.parse(time)
-        );
-
-        event.setLocation(location);
-
-        event.setMaxParticipants(maxParticipants);
-
-        event.setMajority18(
-                Boolean.TRUE.equals(majority18)
-        );
-
-        event.setCategory(category);
-
-        event.setRequiresApproval(
-                Boolean.TRUE.equals(requiresApproval)
-        );
-
-        // =====================================================
-        // NOVA IMAGEM
-        // =====================================================
-
+        // Só troca a imagem se vier uma nova
         if (image != null && !image.isEmpty()) {
-
-            String uploadDir = "uploads/";
-
-            File dir = new File(uploadDir);
-
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-
-            String fileName =
-                    UUID.randomUUID()
-                            + "_"
-                            + image.getOriginalFilename();
-
-            Path filePath =
-                    Paths.get(uploadDir, fileName);
-
-            Files.copy(
-                    image.getInputStream(),
-                    filePath,
-                    StandardCopyOption.REPLACE_EXISTING
-            );
-
-            String imageUrl =
-                    "http://localhost:8080/uploads/"
-                            + fileName;
-
-            event.setImageUrl(imageUrl);
+            event.setImageUrl(saveImage(image));
         }
 
         return service.saveEvent(event);
@@ -281,13 +154,23 @@ public class EventsController {
     // =========================================================
 
     @DeleteMapping("/{id}")
-    public void delete(
-            @PathVariable Long id
-    ) {
-
+    public void delete(@PathVariable Long id) {
         service.deleteById(id);
-
     }
 
+    // =========================================================
+    // HELPER — salva imagem em disco e retorna a URL
+    // =========================================================
 
+    private String saveImage(MultipartFile image) throws Exception {
+        String uploadDir = "uploads/";
+        File dir = new File(uploadDir);
+        if (!dir.exists()) dir.mkdirs();
+
+        String fileName = UUID.randomUUID() + "_" + image.getOriginalFilename();
+        Path filePath = Paths.get(uploadDir, fileName);
+        Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        return "http://localhost:8080/uploads/" + fileName;
+    }
 }
