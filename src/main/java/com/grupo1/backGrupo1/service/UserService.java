@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.List;
 
 @Service
 public class UserService {
@@ -83,6 +84,24 @@ public class UserService {
                 user.getPhone(),
                 user.getAddress()
         );
+    }
+
+    public List<UserResponseDTO> listAllUsers() {
+        return repo.findAll().stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    public UserResponseDTO updateRole(Long userId, String role) {
+        String normalizedRole = role == null ? "" : role.trim().toUpperCase();
+
+        if (!normalizedRole.equals("ADMIN") && !normalizedRole.equals("USER")) {
+            throw new RuntimeException("Papel inválido. Use ADMIN ou USER");
+        }
+
+        User user = findById(userId);
+        user.setRole(normalizedRole);
+        return toResponse(repo.save(user));
     }
 
     private void validateUser(UserDTO dto) {

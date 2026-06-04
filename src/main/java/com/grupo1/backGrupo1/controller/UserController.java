@@ -9,6 +9,8 @@ import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.service.ParticipantService;
 import com.grupo1.backGrupo1.service.UserService;
 import com.grupo1.backGrupo1.dto.UserDTO;
+import com.grupo1.backGrupo1.dto.UserResponseDTO;
+import com.grupo1.backGrupo1.dto.UserRoleUpdateDTO;
 import com.grupo1.backGrupo1.dto.LoginDTO;
 import com.grupo1.backGrupo1.dto.LoginResponseDTO;
 import com.grupo1.backGrupo1.security.JwtService;
@@ -69,6 +71,19 @@ public class UserController {
     @PostMapping("/logout")
     public Map<String, String> logout() {
         return Map.of("message", "Logout realizado com sucesso");
+    }
+
+    @GetMapping
+    public ResponseEntity<List<UserResponseDTO>> listUsers() {
+        return ResponseEntity.ok(service.listAllUsers());
+    }
+
+    @PatchMapping("/{userId}/role")
+    public ResponseEntity<UserResponseDTO> updateRole(
+            @PathVariable Long userId,
+            @RequestBody @Valid UserRoleUpdateDTO dto
+    ) {
+        return ResponseEntity.ok(service.updateRole(userId, dto.getRole()));
     }
 
     @GetMapping("/me")

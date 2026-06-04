@@ -16,11 +16,14 @@ import java.util.stream.Collectors;
 public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final EventsRepository eventsRepository;
+    private final NotificationSseService sseService;
 
     public NotificationService(NotificationRepository notificationRepository,
-                        EventsRepository eventsRepository) {
+                               EventsRepository eventsRepository,
+                               NotificationSseService sseService) {
         this.notificationRepository = notificationRepository;
         this.eventsRepository = eventsRepository;
+        this.sseService = sseService;
     }
 
     public List<NotificationResponseDto> listAll() {
@@ -66,9 +69,40 @@ public class NotificationService {
         notification.setTitulo(dto.getTitulo());
         notification.setConteudo(dto.getConteudo());
         notification.setTipo(dto.getType());
-        notification.setEventId(dto.getEventId());
+        notification.setEventId(dto.getType() == Notification.Type.SPECIFIC_EVENT ? dto.getEventId() : null);
 
-        return NotificationResponseDto.from(notificationRepository.save(notification));
+        NotificationResponseDto response = NotificationResponseDto.from(notificationRepository.save(notification));
+        sseService.publish("notification-created", response);
+        return response;
+    }
+
+    public NotificationResponseDto update(Long id, NotificationDto dto) {
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Aviso não encontrado com id: " + id));
+
+        if (notification.isDeleted()) {
+            throw new EntityNotFoundException("Aviso não encontrado com id: " + id);
+        }
+
+        if (dto.getType() == Notification.Type.SPECIFIC_EVENT) {
+            if (dto.getEventId() == null) {
+                throw new BusinessRuleException(
+                        "eventId é obrigatório para avisos de evento específico");
+            }
+            eventsRepository.findByIdAndDeletedFalse(dto.getEventId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Evento não encontrado com id: " + dto.getEventId()));
+        }
+
+        notification.setTitulo(dto.getTitulo());
+        notification.setConteudo(dto.getConteudo());
+        notification.setTipo(dto.getType());
+        notification.setEventId(dto.getType() == Notification.Type.SPECIFIC_EVENT ? dto.getEventId() : null);
+
+        NotificationResponseDto response = NotificationResponseDto.from(notificationRepository.save(notification));
+        sseService.publish("notification-updated", response);
+        return response;
     }
 
     public void delete(Long id) {
@@ -81,6 +115,7 @@ public class NotificationService {
         }
 
         notification.setDeleted(true);
-        notificationRepository.save(notification);
+        NotificationResponseDto response = NotificationResponseDto.from(notificationRepository.save(notification));
+        sseService.publish("notification-deleted", response);
     }
 }

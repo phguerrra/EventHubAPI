@@ -4,11 +4,14 @@ import com.grupo1.backGrupo1.dto.NotificationDto;
 import com.grupo1.backGrupo1.dto.NotificationResponseDto;
 import com.grupo1.backGrupo1.exception.BusinessRuleException;
 import com.grupo1.backGrupo1.service.NotificationService;
+import com.grupo1.backGrupo1.service.NotificationSseService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 
@@ -17,9 +20,11 @@ import java.util.List;
 public class NotificationController {
 
     private final NotificationService service;
+    private final NotificationSseService sseService;
 
-    public NotificationController(NotificationService service) {
+    public NotificationController(NotificationService service, NotificationSseService sseService) {
         this.service = service;
+        this.sseService = sseService;
     }
 
     // GET /avisos — todos (gerais + eventos)
@@ -41,6 +46,18 @@ public class NotificationController {
         return ResponseEntity.ok(service.listByEvento(eventId));
     }
 
+    // GET /avisos/stream — SSE para avisos gerais e específicos
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamAll() {
+        return sseService.subscribe(null);
+    }
+
+    // GET /avisos/stream/evento/{eventId} — SSE filtrado por evento, incluindo avisos gerais
+    @GetMapping(value = "/stream/evento/{eventId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamByEvento(@PathVariable Long eventId) {
+        return sseService.subscribe(eventId);
+    }
+
     // POST /avisos — cria aviso (ADMIN)
     @PostMapping
     public ResponseEntity<NotificationResponseDto> create(
@@ -50,6 +67,17 @@ public class NotificationController {
         validarAdmin(authentication);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(service.create(dto));
+    }
+
+    // PATCH /avisos/{id} — atualiza aviso (ADMIN)
+    @PatchMapping("/{id}")
+    public ResponseEntity<NotificationResponseDto> update(
+            @PathVariable Long id,
+            @RequestBody @Valid NotificationDto dto,
+            Authentication authentication) {
+
+        validarAdmin(authentication);
+        return ResponseEntity.ok(service.update(id, dto));
     }
 
     // DELETE /avisos/{id} — deleta aviso (ADMIN)

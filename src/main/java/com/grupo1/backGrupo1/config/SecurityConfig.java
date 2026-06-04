@@ -112,6 +112,8 @@ public class SecurityConfig {
                         // USER
                         // =====================================================
 
+                        .requestMatchers(HttpMethod.GET, "/users").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/users/*/role").hasRole("ADMIN")
                         .requestMatchers("/users/me").authenticated()
                         .requestMatchers("/users/me/events").authenticated()
 
