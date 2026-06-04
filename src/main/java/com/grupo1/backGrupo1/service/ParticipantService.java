@@ -80,16 +80,22 @@ public class ParticipantService {
             throw new BusinessRuleException("Evento lotado");
         }
 
-        if (participantRepository.existsByEventIdAndEmailAndDeletedFalse(
-                eventId,
-                user.getEmail()
-        )) {
+        Participant existingParticipant = participantRepository
+                .findByEventIdAndEmail(eventId, user.getEmail())
+                .orElse(null);
+
+        if (existingParticipant != null && !existingParticipant.isDeleted()) {
             throw new BusinessRuleException(
                     "Você já possui inscrição neste evento"
             );
         }
 
         if (event.isMajority18()) {
+            if (user.getDataNascimento() == null) {
+                throw new BusinessRuleException(
+                        "Data de nascimento obrigatória para inscrição em evento +18"
+                );
+            }
 
             int idade = Period.between(
                     user.getDataNascimento(),
@@ -103,22 +109,25 @@ public class ParticipantService {
             }
         }
 
-        participant.setName(user.getName());
-        participant.setEmail(user.getEmail());
-        participant.setCpf(user.getCpf() != null ? user.getCpf() : "");
-        participant.setPhone(user.getPhone() != null ? user.getPhone() : "");
-        participant.setEvent(event);
+        Participant registration = existingParticipant != null ? existingParticipant : participant;
+
+        registration.setDeleted(false);
+        registration.setName(user.getName());
+        registration.setEmail(user.getEmail());
+        registration.setCpf(user.getCpf() != null ? user.getCpf() : "");
+        registration.setPhone(user.getPhone() != null ? user.getPhone() : "");
+        registration.setEvent(event);
 
         if (event.isRequiresApproval()) {
-            participant.setStatus(Participant.Status.PENDENTE);
+            registration.setStatus(Participant.Status.PENDENTE);
         } else {
-            participant.setStatus(Participant.Status.APROVADO);
+            registration.setStatus(Participant.Status.APROVADO);
         }
 
-        participant.setDataInscricao(LocalDateTime.now());
-        participant.setPresenca(Participant.Presenca.PENDENTE);
+        registration.setDataInscricao(LocalDateTime.now());
+        registration.setPresenca(Participant.Presenca.PENDENTE);
 
-        return participantRepository.save(participant);
+        return participantRepository.save(registration);
     }
 
     // =========================================================
@@ -293,11 +302,13 @@ public class ParticipantService {
     // REMOVER PARTICIPANTE
     // =========================================================
 
-    public void removeParticipantById(Long participantId) {
+    @Transactional
+    public void removeParticipantFromEvent(Long eventId, Long participantId) {
 
-        Participant participant = participantRepository.findById(participantId)
+        Participant participant = participantRepository
+                .findByEventIdAndIdAndDeletedFalse(eventId, participantId)
                 .orElseThrow(() ->
-                        new EntityNotFoundException("Participante não encontrado"));
+                        new EntityNotFoundException("Participante não encontrado para este evento"));
 
         participant.setDeleted(true);
         participantRepository.save(participant);

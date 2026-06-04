@@ -6,6 +6,7 @@ import com.grupo1.backGrupo1.dto.ValidacaoRequestDTO;
 import com.grupo1.backGrupo1.service.TicketService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,6 +34,16 @@ public class TicketController {
                 req.getExpirationMinutes()
         );
         return ResponseEntity.ok(resp);
+    }
+
+    @GetMapping("/events/{eventId}/me")
+    public ResponseEntity<TicketResponseDTO> getMyTicket(
+            @PathVariable Long eventId,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                ticketService.getTicketForParticipant(eventId, authentication.getName())
+        );
     }
 
     // Valida o QR e marca presença do participante automaticamente

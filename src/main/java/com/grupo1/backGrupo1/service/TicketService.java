@@ -1,8 +1,11 @@
 package com.grupo1.backGrupo1.service;
 
 import com.grupo1.backGrupo1.dto.TicketResponseDTO;
+import com.grupo1.backGrupo1.exception.BusinessRuleException;
+import com.grupo1.backGrupo1.exception.EntityNotFoundException;
 import com.grupo1.backGrupo1.exception.TicketAlreadyUsedException;
 import com.grupo1.backGrupo1.exception.TicketNotFoundException;
+import com.grupo1.backGrupo1.model.Participant;
 import com.grupo1.backGrupo1.model.Ticket;
 import com.grupo1.backGrupo1.repository.TicketRepository;
 import org.springframework.stereotype.Service;
@@ -57,6 +60,24 @@ public class TicketService {
 
         String qrBase64 = qrCodeService.generateQrPngBase64(token, 300);
         return new TicketResponseDTO(ticketUuid, eventId, token, qrBase64);
+    }
+
+    @Transactional(readOnly = true)
+    public TicketResponseDTO getTicketForParticipant(Long eventId, String email) {
+        Participant participant = participantService.findParticipantByEventAndEmail(eventId, email);
+
+        if (participant.getStatus() != Participant.Status.APROVADO) {
+            throw new BusinessRuleException("Participante não aprovado");
+        }
+
+        Ticket ticket = ticketRepository.findByEventIdAndParticipantId(eventId, participant.getId())
+                .orElseThrow(() -> new EntityNotFoundException("QR Code ainda não foi gerado"));
+
+        long expirationMillis = 24L * 60L * 60L * 1000L;
+        String token = jwtService.generateToken(ticket.getTicketId(), eventId, expirationMillis);
+        String qrBase64 = qrCodeService.generateQrPngBase64(token, 300);
+
+        return new TicketResponseDTO(ticket.getTicketId(), eventId, token, qrBase64);
     }
 
     // VALIDAR TICKET E MARCAR PRESENÇA

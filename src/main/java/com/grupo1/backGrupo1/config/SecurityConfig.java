@@ -8,7 +8,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -56,11 +56,15 @@ public class SecurityConfig {
                         // EVENTS
                         // =====================================================
 
-                        .requestMatchers(HttpMethod.GET, "/events", "/events/**").permitAll()
-                        .requestMatchers(HttpMethod.POST,   "/events").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH,  "/events/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/events/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/events", "/events/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/events").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PATCH, "/events/**").hasRole("ADMIN")
 
+// NÃO BLOQUEAR O CANCELAMENTO
+                                .requestMatchers(HttpMethod.DELETE, "/events/*/participants/cancel").authenticated()
+
+// SOMENTE EXCLUSÃO DE EVENTOS
+                                .requestMatchers(HttpMethod.DELETE, "/events/*").hasRole("ADMIN")
                         // =====================================================
                         // PARTICIPANTS
                         // =====================================================
@@ -99,6 +103,7 @@ public class SecurityConfig {
                         // TICKETS
                         // =====================================================
 
+                        .requestMatchers(HttpMethod.GET, "/tickets/events/*/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/tickets/validar").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/tickets").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET,  "/tickets/**").hasRole("ADMIN")
@@ -116,7 +121,7 @@ public class SecurityConfig {
 
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterAfter(jwtAuthenticationFilter, SecurityContextHolderFilter.class);
 
         return http.build();
     }

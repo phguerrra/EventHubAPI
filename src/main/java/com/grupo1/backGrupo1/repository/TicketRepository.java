@@ -6,4 +6,5 @@ import com.grupo1.backGrupo1.model.Ticket;
 
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
     Optional<Ticket> findByTicketId(String ticketId);
+    Optional<Ticket> findByEventIdAndParticipantId(Long eventId, Long participantId);
 }

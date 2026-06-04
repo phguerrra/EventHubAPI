@@ -79,10 +79,16 @@ public class ParticipantController {
     })
     public ResponseEntity<?> registerParticipant(
             @PathVariable Long eventId,
+            @RequestParam(required = false) Long userId,
             Authentication authentication
     ) {
-        String email = authentication.getName();
-        User user = userService.findByEmail(email);
+        User user;
+        if (userId != null) {
+            user = userService.findById(userId);
+        } else {
+            String email = authentication.getName();
+            user = userService.findByEmail(email);
+        }
 
         Participant saved = service.registerForEvent(eventId, new Participant(), user.getId());
 
@@ -101,13 +107,29 @@ public class ParticipantController {
     @DeleteMapping("/cancel")
     @Operation(summary = "Cancelar inscrição do usuário logado")
     @ApiResponses({
+
             @ApiResponse(responseCode = "200", description = "Inscrição cancelada"),
             @ApiResponse(responseCode = "404", description = "Inscrição não encontrada")
     })
     public ResponseEntity<?> cancelarInscricao(
             @PathVariable Long eventId,
+            @RequestParam(required = false) Long participantId,
             Authentication authentication
     ) {
+        System.out.println("CHEGOU NO CANCELAR");
+        System.out.println("EVENTO: " + eventId);
+        System.out.println("USUARIO: " + authentication.getName());
+
+        if (participantId != null) {
+            if (!isAdmin(authentication)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("erro", "Apenas administradores podem cancelar inscrição por participante"));
+            }
+
+            service.removeParticipantFromEvent(eventId, participantId);
+            return ResponseEntity.noContent().build();
+        }
+
         service.cancelarInscricao(authentication.getName(), eventId);
         return ResponseEntity.ok(Map.of("mensagem", "Inscrição cancelada com sucesso"));
     }
@@ -178,8 +200,11 @@ public class ParticipantController {
             @ApiResponse(responseCode = "204", description = "Removido"),
             @ApiResponse(responseCode = "404", description = "Não encontrado")
     })
-    public ResponseEntity<?> removeParticipant(@PathVariable Long participantId) {
-        service.removeParticipantById(participantId);
+    public ResponseEntity<?> removeParticipant(
+            @PathVariable Long eventId,
+            @PathVariable Long participantId
+    ) {
+        service.removeParticipantFromEvent(eventId, participantId);
         return ResponseEntity.noContent().build();
     }
 
@@ -213,5 +238,11 @@ public class ParticipantController {
                 p.getDataInscricao(),
                 p.getPresenca()
         );
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication != null
+                && authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 }

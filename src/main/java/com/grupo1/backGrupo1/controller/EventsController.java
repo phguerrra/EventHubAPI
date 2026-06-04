@@ -1,6 +1,9 @@
 package com.grupo1.backGrupo1.controller;
 
+import com.grupo1.backGrupo1.dto.EventResponseDTO;
+import com.grupo1.backGrupo1.dto.ParticipantResponseDTO;
 import com.grupo1.backGrupo1.model.Event;
+import com.grupo1.backGrupo1.model.Participant;
 import com.grupo1.backGrupo1.service.EventsService;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -34,10 +37,12 @@ public class EventsController {
     // =========================================================
 
     @GetMapping
-    public List<Event> listAll(
+    public List<EventResponseDTO> listAll(
             @RequestParam(required = false) String category
     ) {
-        return service.listAll(category);
+        return service.listAll(category).stream()
+                .map(this::toDTO)
+                .toList();
     }
 
     // =========================================================
@@ -48,10 +53,12 @@ public class EventsController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Resultados retornados")
     })
-    public List<Event> search(
+    public List<EventResponseDTO> search(
             @RequestParam(required = false) String q
     ) {
-        return service.search(q);
+        return service.search(q).stream()
+                .map(this::toDTO)
+                .toList();
     }
 
     // =========================================================
@@ -59,8 +66,8 @@ public class EventsController {
     // =========================================================
 
     @GetMapping("/{id}")
-    public Event getById(@PathVariable Long id) {
-        return service.getById(id);
+    public EventResponseDTO getById(@PathVariable Long id) {
+        return toDTO(service.getById(id));
     }
 
     // =========================================================
@@ -172,5 +179,38 @@ public class EventsController {
         Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         return "http://localhost:8080/uploads/" + fileName;
+    }
+
+    private EventResponseDTO toDTO(Event event) {
+        return new EventResponseDTO(
+                event.getId(),
+                event.getTitle(),
+                event.getDescription(),
+                event.getDate(),
+                event.getTime(),
+                event.getLocation(),
+                event.getMaxParticipants(),
+                event.isMajority18(),
+                event.getCategory(),
+                event.isRequiresApproval(),
+                event.getImageUrl(),
+                event.getParticipants().stream()
+                        .filter(participant -> !participant.isDeleted())
+                        .map(this::toDTO)
+                        .toList()
+        );
+    }
+
+    private ParticipantResponseDTO toDTO(Participant participant) {
+        return new ParticipantResponseDTO(
+                participant.getId(),
+                participant.getName(),
+                participant.getEmail(),
+                participant.getPhone(),
+                participant.getCpf(),
+                participant.getStatus(),
+                participant.getDataInscricao(),
+                participant.getPresenca()
+        );
     }
 }
