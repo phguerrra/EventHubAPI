@@ -21,7 +21,7 @@ public class ResendEmailService implements EmailService {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
-    public ResendEmailService(@Value("${resend.api.key}") String apiKey,
+    public ResendEmailService(@Value("${resend.api.key:}") String apiKey,
                               @Value("${resend.from:Eventos <onboarding@resend.dev>}") String from,
                               ObjectMapper objectMapper) {
         this.apiKey = apiKey;
