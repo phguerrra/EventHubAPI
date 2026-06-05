@@ -42,6 +42,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
+    @ExceptionHandler(EmailSendException.class)
+    public ResponseEntity<Map<String, String>> handleEmailSend(EmailSendException ex) {
+        Map<String, String> body = new HashMap<>();
+        body.put("erro", "Não foi possível enviar o email de confirmação: " + ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(body);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleOther(Exception ex) {
         Map<String, String> body = new HashMap<>();

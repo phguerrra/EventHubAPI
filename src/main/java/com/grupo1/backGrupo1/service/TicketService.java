@@ -46,8 +46,24 @@ public class TicketService {
             Long participantId,
             long expirationMinutes
     ) {
+        Participant participant = participantService.findParticipantByEventAndId(eventId, participantId);
+
+        if (participant.getStatus() != Participant.Status.APROVADO) {
+            throw new BusinessRuleException("Participante não aprovado");
+        }
+
+        Ticket existingTicket = ticketRepository.findByEventIdAndParticipantId(eventId, participantId)
+                .orElse(null);
+
         String ticketUuid = UUID.randomUUID().toString();
         long expirationMillis = expirationMinutes * 60 * 1000;
+
+        if (existingTicket != null) {
+            String existingToken = jwtService.generateToken(existingTicket.getTicketId(), eventId, expirationMillis);
+            String existingQrBase64 = qrCodeService.generateQrPngBase64(existingToken, 300);
+            return new TicketResponseDTO(existingTicket.getTicketId(), eventId, existingToken, existingQrBase64);
+        }
+
         String token = jwtService.generateToken(ticketUuid, eventId, expirationMillis);
 
         Ticket ticket = new Ticket();

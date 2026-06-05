@@ -334,6 +334,10 @@ public class ParticipantService {
                         new EntityNotFoundException("Participante não encontrado"));
     }
 
+    public Participant findParticipantByEventAndId(Long eventId, Long participantId) {
+        return buscarParticipanteAtivo(eventId, participantId);
+    }
+
     private Participant buscarParticipanteAtivo(Long eventId, Long participantId) {
 
         Participant participant = participantRepository.findById(participantId)
