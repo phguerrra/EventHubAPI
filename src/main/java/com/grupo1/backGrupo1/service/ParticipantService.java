@@ -64,6 +64,13 @@ public class ParticipantService {
                                 "Evento não encontrado com id: " + eventId
                         ));
 
+        // Não permite inscrição em evento que já ocorreu
+        if (event.getDate().isBefore(LocalDate.now())) {
+            throw new BusinessRuleException(
+                    "Não é possível se inscrever em um evento que já ocorreu"
+            );
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
                         new EntityNotFoundException(
@@ -241,10 +248,6 @@ public class ParticipantService {
     // MARCAR PRESENÇA POR ID (chamado pelo TicketService ao validar QR)
     // =========================================================
 
-    /**
-     * Busca o participante diretamente pelo id e marca PRESENTE.
-     * Chamado internamente quando o QR Code é validado com sucesso.
-     */
     @Transactional
     public Participant marcarPresencaPorId(Long participantId) {
 

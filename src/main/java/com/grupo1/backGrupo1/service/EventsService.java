@@ -8,19 +8,19 @@ import com.grupo1.backGrupo1.repository.EventsRepository;
 import com.grupo1.backGrupo1.repository.ParticipantRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
 public class EventsService {
 
-
     private static final List<String> CATEGORIES = List.of(
-        "Tecnologia",
-        "Educação",
-        "Música",
-        "Esporte",
-        "Entretenimento"
-                );
+            "Tecnologia",
+            "Educação",
+            "Música",
+            "Esporte",
+            "Entretenimento"
+    );
 
     private final EventsRepository repository;
     private final ParticipantRepository participantRepository;
@@ -31,46 +31,28 @@ public class EventsService {
     }
 
     public List<Event> listAll(String category) {
-        if (category != null && !category.isBlank()){
+        if (category != null && !category.isBlank()) {
             validateCategory(category);
-
             return repository.findByCategoryIgnoreCaseAndDeletedFalse(category);
         }
         return repository.findAllByDeletedFalse();
     }
 
-    public List<String> listCategories(){
+    public List<String> listCategories() {
         return CATEGORIES;
     }
 
     public List<Event> search(String termo) {
-
-        // Caso o termo venha vazio ou nulo,
-        // retorna todos os eventos ativos
         if (termo == null || termo.isBlank()) {
             return repository.findAllByDeletedFalse();
         }
-
-        // Realiza a busca utilizando o termo digitado
         return repository.searchByTermo(termo.trim());
-    }
-
-    private void validateCategory(String category){
-        boolean isValid = CATEGORIES.stream()
-                .anyMatch(c -> c.equalsIgnoreCase(category));
-
-        if(!isValid){
-            throw new BusinessRuleException(
-                    "Categoria invalida. Use:" + CATEGORIES
-            );
-        }
     }
 
     public Event getById(Long id) {
         return repository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new EntityNotFoundException("Evento não encontrado com id: " + id));
     }
-
 
     public Event saveEvent(Event event) {
         if (event == null) {
@@ -85,13 +67,15 @@ public class EventsService {
         if (event.getDate() == null) {
             throw new BusinessRuleException("Data do evento é obrigatória");
         }
+        // Não permite criar ou editar evento com data no passado
+        if (event.getDate().isBefore(LocalDate.now())) {
+            throw new BusinessRuleException("A data do evento não pode ser no passado");
+        }
         if (event.getParticipants() != null && event.getParticipants().size() > event.getMaxParticipants()) {
             throw new BusinessRuleException("Número de participantes excede o máximo permitido");
         }
-        if (event.getCategory() == null || event.getCategory().isBlank()){
-            throw new BusinessRuleException(
-                    "Categoria do evento é obrigatoria"
-            );
+        if (event.getCategory() == null || event.getCategory().isBlank()) {
+            throw new BusinessRuleException("Categoria do evento é obrigatória");
         }
         validateCategory(event.getCategory());
         return repository.save(event);
@@ -115,5 +99,14 @@ public class EventsService {
         participant.setEvent(null);
 
         repository.save(event);
+    }
+
+    private void validateCategory(String category) {
+        boolean isValid = CATEGORIES.stream()
+                .anyMatch(c -> c.equalsIgnoreCase(category));
+
+        if (!isValid) {
+            throw new BusinessRuleException("Categoria invalida. Use:" + CATEGORIES);
+        }
     }
 }
