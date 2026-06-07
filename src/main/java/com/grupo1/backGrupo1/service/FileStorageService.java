@@ -23,6 +23,39 @@ public class FileStorageService {
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
+    public String storeFile(MultipartFile file, String folder) {
+        if (file == null || file.isEmpty()) {
+            throw new BusinessRuleException("O arquivo é obrigatório");
+        }
+
+        if (folder == null || !folder.matches("[a-zA-Z0-9_-]+")) {
+            throw new BusinessRuleException("Pasta de upload inválida");
+        }
+
+        String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
+        String extension = getExtension(originalFilename);
+
+        if (!ALLOWED_EXTENSIONS.contains(extension)) {
+            throw new BusinessRuleException("Formato de imagem inválido. Use jpg, jpeg, png ou webp");
+        }
+
+        try {
+            Path uploadPath = Paths.get(uploadDir, folder).toAbsolutePath().normalize();
+            Files.createDirectories(uploadPath);
+
+            String storedFilename = UUID.randomUUID() + "." + extension;
+            Path targetPath = uploadPath.resolve(storedFilename);
+
+            try (InputStream inputStream = file.getInputStream()) {
+                Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            return "/uploads/" + folder + "/" + storedFilename;
+        } catch (IOException e) {
+            throw new BusinessRuleException("Não foi possível salvar o arquivo");
+        }
+    }
+
     public String storeEventPhoto(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new BusinessRuleException("A foto do evento é obrigatória");

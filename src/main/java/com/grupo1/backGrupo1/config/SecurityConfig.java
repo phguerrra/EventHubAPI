@@ -91,6 +91,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET,    "/avisos/**").permitAll()
                         .requestMatchers(HttpMethod.POST,   "/avisos").authenticated()
+                        .requestMatchers(HttpMethod.PATCH,  "/avisos/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/avisos/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/avisos/stream").authenticated()
                         .requestMatchers(HttpMethod.GET, "/avisos/stream/**").authenticated()
@@ -129,6 +130,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/users").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/users/*/role").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/users/me").authenticated()
                         .requestMatchers("/users/me").authenticated()
                         .requestMatchers("/users/me/events").authenticated()
 

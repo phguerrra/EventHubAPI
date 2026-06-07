@@ -35,4 +35,8 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
     private List<Participant> participants = new ArrayList<>();
 
+    @JsonManagedReference
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EventSpeaker> speakers = new ArrayList<>();
+
 }

@@ -2,6 +2,7 @@ package com.grupo1.backGrupo1.service;
 
 import com.grupo1.backGrupo1.dto.LoginDTO;
 import com.grupo1.backGrupo1.dto.UserDTO;
+import com.grupo1.backGrupo1.dto.UserProfileUpdateDTO;
 import com.grupo1.backGrupo1.dto.UserResponseDTO;
 import com.grupo1.backGrupo1.exception.AuthenticationException;
 import com.grupo1.backGrupo1.exception.EntityNotFoundException;
@@ -102,6 +103,32 @@ public class UserService {
         User user = findById(userId);
         user.setRole(normalizedRole);
         return toResponse(repo.save(user));
+    }
+
+    public UserResponseDTO updateProfile(String email, UserProfileUpdateDTO dto) {
+        User user = findByEmail(email);
+
+        String name = dto.getName() == null ? "" : dto.getName().trim();
+        if (name.isBlank()) {
+            throw new RuntimeException("Nome é obrigatório");
+        }
+
+        if (dto.getDataNascimento() != null && dto.getDataNascimento().isAfter(LocalDate.now())) {
+            throw new RuntimeException("Data de nascimento inválida");
+        }
+
+        user.setName(name);
+        user.setPhone(normalizeOptional(dto.getPhone()));
+        user.setAddress(normalizeOptional(dto.getAddress()));
+        user.setDataNascimento(dto.getDataNascimento());
+
+        return toResponse(repo.save(user));
+    }
+
+    private String normalizeOptional(String value) {
+        if (value == null) return null;
+        String trimmed = value.trim();
+        return trimmed.isBlank() ? null : trimmed;
     }
 
     private void validateUser(UserDTO dto) {

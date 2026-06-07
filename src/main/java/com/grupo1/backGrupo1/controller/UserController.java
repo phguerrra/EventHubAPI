@@ -9,6 +9,7 @@ import com.grupo1.backGrupo1.model.User;
 import com.grupo1.backGrupo1.service.ParticipantService;
 import com.grupo1.backGrupo1.service.UserService;
 import com.grupo1.backGrupo1.dto.UserDTO;
+import com.grupo1.backGrupo1.dto.UserProfileUpdateDTO;
 import com.grupo1.backGrupo1.dto.UserResponseDTO;
 import com.grupo1.backGrupo1.dto.UserRoleUpdateDTO;
 import com.grupo1.backGrupo1.dto.LoginDTO;
@@ -96,10 +97,20 @@ public class UserController {
         response.put("email", user.getEmail());
         response.put("phone", user.getPhone() != null ? user.getPhone() : "");
         response.put("cpf", user.getCpf() != null ? user.getCpf() : "");
+        response.put("address", user.getAddress() != null ? user.getAddress() : "");
+        response.put("dataNascimento", user.getDataNascimento());
         response.put("role", user.getRole());
         response.put("userId", user.getId());
 
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/me")
+    public ResponseEntity<UserResponseDTO> updateMe(
+            Authentication authentication,
+            @RequestBody @Valid UserProfileUpdateDTO dto
+    ) {
+        return ResponseEntity.ok(service.updateProfile(authentication.getName(), dto));
     }
 
     // Eventos que o usuário está inscrito (todos os status)

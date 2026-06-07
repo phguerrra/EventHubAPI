@@ -24,4 +24,5 @@ public class EventResponseDTO {
     private boolean requiresApproval;
     private String imageUrl;
     private List<ParticipantResponseDTO> participants;
+    private List<EventSpeakerDTO> speakers;
 }

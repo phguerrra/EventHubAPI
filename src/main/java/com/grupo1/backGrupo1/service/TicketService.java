@@ -52,7 +52,7 @@ public class TicketService {
             throw new BusinessRuleException("Participante não aprovado");
         }
 
-        Ticket existingTicket = ticketRepository.findByEventIdAndParticipantId(eventId, participantId)
+        Ticket existingTicket = ticketRepository.findFirstByEventIdAndParticipantIdOrderByDataCriacaoDesc(eventId, participantId)
                 .orElse(null);
 
         String ticketUuid = UUID.randomUUID().toString();
@@ -86,7 +86,7 @@ public class TicketService {
             throw new BusinessRuleException("Participante não aprovado");
         }
 
-        Ticket ticket = ticketRepository.findByEventIdAndParticipantId(eventId, participant.getId())
+        Ticket ticket = ticketRepository.findFirstByEventIdAndParticipantIdOrderByDataCriacaoDesc(eventId, participant.getId())
                 .orElseThrow(() -> new EntityNotFoundException("QR Code ainda não foi gerado"));
 
         long expirationMillis = 24L * 60L * 60L * 1000L;
