@@ -1,66 +1,50 @@
 package com.grupo1.backGrupo1.service.email;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.resend.Resend;
+import com.resend.core.exception.ResendException;
+import com.resend.services.emails.model.CreateEmailOptions;
 import com.grupo1.backGrupo1.exception.EmailSendException;
-import com.grupo1.backGrupo1.service.email.dto.ResendEmailRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
-import java.util.List;
 
 @Service
 public class ResendEmailService implements EmailService {
 
-    private final String apiKey;
-    private final String from;
-    private final HttpClient httpClient;
-    private final ObjectMapper objectMapper;
+    private static final Logger log = LoggerFactory.getLogger(ResendEmailService.class);
 
-    public ResendEmailService(@Value("${resend.api.key:}") String apiKey,
-                              @Value("${resend.from:Eventos <onboarding@resend.dev>}") String from,
-                              ObjectMapper objectMapper) {
-        this.apiKey = apiKey;
+    private final Resend resend;
+    private final String from;
+
+    public ResendEmailService(
+            @Value("${resend.api.key:}") String apiKey,
+            @Value("${resend.from:Eventos <onboarding@resend.dev>}") String from) {
+
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException(
+                    "resend.api.key não configurado no application.properties");
+        }
+        this.resend = new Resend(apiKey);
         this.from = from;
-        this.objectMapper = objectMapper;
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(10))
-                .build();
     }
 
     @Override
     public void sendConfirmationEmail(String to, String subject, String html) {
-        if (apiKey == null || apiKey.isBlank()) {
-            throw new EmailSendException("Resend API key is not configured (resend.api.key)");
-        }
-
         try {
-            ResendEmailRequest payload = new ResendEmailRequest(from, List.of(to), subject, html);
-            String body = objectMapper.writeValueAsString(payload);
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://api.resend.com/emails"))
-                    .header("Authorization", "Bearer " + apiKey)
-                    .header("Content-Type", "application/json")
-                    .timeout(Duration.ofSeconds(20))
-                    .POST(HttpRequest.BodyPublishers.ofString(body))
+            CreateEmailOptions options = CreateEmailOptions.builder()
+                    .from(from)
+                    .to(to)
+                    .subject(subject)
+                    .html(html)
                     .build();
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            resend.emails().send(options);
+            log.info("Email enviado para {} | assunto: {}", to, subject);
 
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                String msg = String.format("Resend API returned status=%d body=%s", response.statusCode(), response.body());
-                throw new EmailSendException(msg);
-            }
-
-        } catch (EmailSendException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new EmailSendException("Failed to send email via Resend", e);
+        } catch (ResendException e) {
+            log.error("Falha ao enviar email para {} | {}", to, e.getMessage());
+            throw new EmailSendException("Falha ao enviar email via Resend: " + e.getMessage(), e);
         }
     }
 }
