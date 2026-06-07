@@ -92,6 +92,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,    "/avisos/**").permitAll()
                         .requestMatchers(HttpMethod.POST,   "/avisos").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/avisos/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/avisos/stream").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/avisos/stream/**").authenticated()
 
                         // =====================================================
                         // UPLOADS
@@ -107,6 +109,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/tickets/validar").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/tickets").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET,  "/tickets/**").hasRole("ADMIN")
+
+                        // =====================================================
+                        // SPEAKER
+                        // =====================================================
+
+                        .requestMatchers(HttpMethod.GET, "/speakers/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/speakers/event/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/speakers").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/speakers/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/speakers/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/speakers/*/photo").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/speakers/*/schedule").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/speakers/*/schedule/**").authenticated()
 
                         // =====================================================
                         // USER
