@@ -1,7 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -17,6 +17,7 @@
 
 	<properties>
 		<java.version>21</java.version>
+		<sentry.version>7.14.0</sentry.version>
 	</properties>
 
 	<dependencies>
@@ -27,17 +28,10 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-		<!-- JACKSON (ensure databind available) -->
+		<!-- JACKSON -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>com.resend</groupId>
-			<artifactId>resend-java</artifactId>
-			<version>v4.14.1</version>
-			<scope>compile</scope>
 		</dependency>
 
 		<!-- JPA -->
@@ -59,7 +53,7 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- CRYPTO -->
+		<!-- SECURITY -->
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-crypto</artifactId>
@@ -87,23 +81,54 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- ZXing (QR code) -->
-			<dependency>
-				<groupId>com.google.zxing</groupId>
-				<artifactId>core</artifactId>
-				<version>3.5.1</version>
-			</dependency>
-			<dependency>
-				<groupId>com.google.zxing</groupId>
-				<artifactId>javase</artifactId>
-				<version>3.5.1</version>
-			</dependency>
+		<!-- QR CODE -->
+		<dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>core</artifactId>
+			<version>3.5.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>javase</artifactId>
+			<version>3.5.1</version>
+		</dependency>
 
-			<!-- LOMBOK -->
+		<!-- LOMBOK -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
+		</dependency>
+
+		<!-- RESEND — versão corrigida, sem duplicata -->
+		<dependency>
+			<groupId>com.resend</groupId>
+			<artifactId>resend-java</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+
+		<!-- FLYWAY -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+
+		<!-- OPENAPI / SWAGGER -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.8.8</version>
+		</dependency>
+
+		<!-- SENTRY -->
+		<dependency>
+			<groupId>io.sentry</groupId>
+			<artifactId>sentry-spring-boot-starter-jakarta</artifactId>
+			<version>${sentry.version}</version>
 		</dependency>
 
 		<!-- TESTES -->
@@ -112,61 +137,51 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-
-		<!-- MOCKITO AGENT (corrige seu warning) -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>net.bytebuddy</groupId>
 			<artifactId>byte-buddy-agent</artifactId>
 			<version>1.17.8</version>
 			<scope>test</scope>
 		</dependency>
-
-		<dependency>
-			<groupId>com.resend</groupId>
-			<artifactId>resend-java</artifactId>
-			<version>v4.14.1</version>
-			<scope>compile</scope>
-		</dependency>
-
-		<!-- H2 in-memory database for tests -->
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
-
-		<!-- Explicitly include spring-boot-test-autoconfigure to ensure test slices compile correctly -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-test-autoconfigure</artifactId>
 			<scope>test</scope>
 		</dependency>
 
-        <!-- OpenAPI / Swagger -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.1.0</version>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc-test</artifactId>
+			<version>4.1.0-RC1</version>
+			<scope>test</scope>
+		</dependency>
 
-        <!-- Flyway DB migrations -->
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-        </dependency>
+		<!-- Source: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-webmvc -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc</artifactId>
+			<version>4.1.0-RC1</version>
+			<scope>compile</scope>
+		</dependency>
 
 	</dependencies>
 
 	<build>
 		<plugins>
-
-			<!-- SPRING BOOT -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
-
-			<!-- COMPILADOR -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -179,19 +194,33 @@
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
-
-			<!-- TESTES (RESOLVE O WARNING DO MOCKITO) -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.2.5</version>
 				<configuration>
-					<argLine>
-						-javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/1.17.8/byte-buddy-agent-1.17.8.jar
-					</argLine>
+					<argLine>-javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/1.17.8/byte-buddy-agent-1.17.8.jar</argLine>
 				</configuration>
 			</plugin>
-
+			<plugin>
+				<groupId>io.sentry</groupId>
+				<artifactId>sentry-maven-plugin</artifactId>
+				<version>0.11.0</version>
+				<extensions>true</extensions>
+				<configuration>
+					<debugSentryCli>true</debugSentryCli>
+					<org>bernardo-severo</org>
+					<project>trabalho-gustavo</project>
+					<authToken>${env.SENTRY_AUTH_TOKEN}</authToken>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>uploadSourceBundle</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
