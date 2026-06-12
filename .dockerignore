@@ -1,0 +1,14 @@
+target/
+.git/
+.gitignore
+.idea/
+*.iml
+*.log
+.env
+.env.*
+node_modules/
+dist/
+build/
+.DS_Store
+uploads/
+
