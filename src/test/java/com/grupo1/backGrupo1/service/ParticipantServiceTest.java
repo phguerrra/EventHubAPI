@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -74,6 +75,34 @@ class ParticipantServiceTest {
     }
 
     @Test
+    void aprovarInscricao_sendsConfirmationEmail() {
+        Event event = new Event();
+        event.setId(1L);
+        event.setTitle("Workshop");
+        event.setMaxParticipants(10);
+
+        Participant participant = new Participant();
+        participant.setId(10L);
+        participant.setName("Pedro");
+        participant.setEmail("pedro@example.com");
+        participant.setStatus(Participant.Status.PENDENTE);
+        participant.setEvent(event);
+
+        when(participantRepository.findById(10L)).thenReturn(Optional.of(participant));
+        when(participantRepository.countByEventIdAndDeletedFalseAndStatus(1L, Participant.Status.APROVADO))
+                .thenReturn(0L);
+        when(participantRepository.save(participant)).thenReturn(participant);
+
+        service.aprovarInscricao(1L, 10L);
+
+        verify(emailService).sendConfirmationEmail(
+                eq("pedro@example.com"),
+                eq("Inscrição aprovada — Workshop"),
+                contains("foi aprovada")
+        );
+    }
+
+    @Test
     void aprovarInscricao_doesNotThrowWhenConfirmationEmailFails() {
         Event event = new Event();
         event.setId(1L);
@@ -95,32 +124,7 @@ class ParticipantServiceTest {
                 .when(emailService)
                 .sendConfirmationEmail(eq("pedro@example.com"), eq("Inscrição aprovada — Workshop"), contains("foi aprovada"));
 
-        // não deve lançar exceção — falha de email é silenciosa
+        // falha de email é silenciosa — não deve derrubar a aprovação
         assertDoesNotThrow(() -> service.aprovarInscricao(1L, 10L));
-    }
-
-    @Test
-    void aprovarInscricao_throwsWhenConfirmationEmailFails() {
-        Event event = new Event();
-        event.setId(1L);
-        event.setTitle("Workshop");
-        event.setMaxParticipants(10);
-
-        Participant participant = new Participant();
-        participant.setId(10L);
-        participant.setName("Pedro");
-        participant.setEmail("pedro@example.com");
-        participant.setStatus(Participant.Status.PENDENTE);
-        participant.setEvent(event);
-
-        when(participantRepository.findById(10L)).thenReturn(Optional.of(participant));
-        when(participantRepository.countByEventIdAndDeletedFalseAndStatus(1L, Participant.Status.APROVADO))
-                .thenReturn(0L);
-        when(participantRepository.save(participant)).thenReturn(participant);
-        doThrow(new EmailSendException("Resend API key is not configured"))
-                .when(emailService)
-                .sendConfirmationEmail(eq("pedro@example.com"), eq("Inscrição aprovada — Workshop"), contains("foi aprovada"));
-
-        assertThrows(EmailSendException.class, () -> service.aprovarInscricao(1L, 10L));
     }
 }
