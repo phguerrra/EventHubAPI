@@ -74,7 +74,7 @@ class ParticipantServiceTest {
     }
 
     @Test
-    void aprovarInscricao_sendsConfirmationEmail() {
+    void aprovarInscricao_doesNotThrowWhenConfirmationEmailFails() {
         Event event = new Event();
         event.setId(1L);
         event.setTitle("Workshop");
@@ -91,14 +91,12 @@ class ParticipantServiceTest {
         when(participantRepository.countByEventIdAndDeletedFalseAndStatus(1L, Participant.Status.APROVADO))
                 .thenReturn(0L);
         when(participantRepository.save(participant)).thenReturn(participant);
+        doThrow(new EmailSendException("Resend API key is not configured"))
+                .when(emailService)
+                .sendConfirmationEmail(eq("pedro@example.com"), eq("Inscrição aprovada — Workshop"), contains("foi aprovada"));
 
-        service.aprovarInscricao(1L, 10L);
-
-        verify(emailService).sendConfirmationEmail(
-                eq("pedro@example.com"),
-                eq("Inscrição aprovada — Workshop"),
-                contains("foi aprovada")
-        );
+        // não deve lançar exceção — falha de email é silenciosa
+        assertDoesNotThrow(() -> service.aprovarInscricao(1L, 10L));
     }
 
     @Test
