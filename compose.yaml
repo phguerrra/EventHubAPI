@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: 'postgres:latest'
+    image: 'postgres:16'
     container_name: eventdb-postgres
     environment:
       - 'POSTGRES_DB=eventdb'
