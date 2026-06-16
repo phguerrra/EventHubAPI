@@ -15,6 +15,8 @@ services:
       retries: 5
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - eventhub-network
 
   app:
     build: .
@@ -28,6 +30,7 @@ services:
       - JWT_SECRET=dev-secret-key-dev-secret-key-123456
       - JWT_EXPIRATION_MS=86400000
       - JWT_REFRESH_EXPIRATION_MS=604800000
+      - RESEND_API_KEY=re_NvL46LrR_NmBW3z6EpTwqvYsHRw4mhRQE
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SERVER_PORT=8080
     depends_on:
