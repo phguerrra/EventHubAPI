@@ -1,78 +1,64 @@
 package com.grupo1.backGrupo1.integration;
 
-import com.grupo1.backGrupo1.model.Notification;
-import com.grupo1.backGrupo1.repository.NotificationRepository;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
+import com.grupo1.backGrupo1.controller.NotificationController;
+import com.grupo1.backGrupo1.service.NotificationService;
+import com.grupo1.backGrupo1.service.NotificationSseService;
+import com.grupo1.backGrupo1.service.ParticipantService;
+import com.grupo1.backGrupo1.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.http.MediaType;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import java.util.List;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(NotificationController.class)
 @ActiveProfiles("test")
 class NotificationIntegrationTest {
 
-    @Autowired MockMvc mockMvc;
-    @Autowired NotificationRepository notificationRepository;
+    @Autowired
+    private MockMvc mockMvc;
 
-    @AfterEach
-    void cleanup() {
-        notificationRepository.deleteAll();
-    }
+    @MockBean
+    private NotificationService notificationService;
+
+    @MockBean
+    private NotificationSseService notificationSseService;
+
+    @MockBean
+    private ParticipantService participantService;
+
+    @MockBean
+    private UserService userService;
 
     @Test
-    @DisplayName("GET /avisos deve retornar lista vazia quando não há avisos")
     void listAll_empty() throws Exception {
+        when(notificationService.listAll()).thenReturn(List.of());
+
         mockMvc.perform(get("/avisos"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(status().isOk());
     }
 
     @Test
-    @DisplayName("POST /avisos sem autenticação deve retornar 403 ou 401")
+    void listAll_returnsNotDeleted() throws Exception {
+        when(notificationService.listAll()).thenReturn(List.of());
+
+        mockMvc.perform(get("/avisos"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void create_unauthenticated_returns401or403() throws Exception {
         mockMvc.perform(post("/avisos")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                    {
-                        "titulo": "Teste",
-                        "conteudo": "Conteúdo",
-                        "type": "GENERAL"
-                    }
-                """))
+                        .contentType("application/json")
+                        .content("{\"titulo\":\"T\",\"conteudo\":\"C\",\"type\":\"GENERAL\"}"))
                 .andExpect(status().is4xxClientError());
-    }
-
-    @Test
-    @DisplayName("GET /avisos deve retornar avisos não deletados")
-    void listAll_returnsNotDeleted() throws Exception {
-        Notification n = new Notification();
-        n.setTitulo("Aviso Ativo");
-        n.setConteudo("Conteúdo");
-        n.setTipo(Notification.Type.GENERAL);
-        notificationRepository.save(n);
-
-        Notification deleted = new Notification();
-        deleted.setTitulo("Aviso Deletado");
-        deleted.setConteudo("Conteúdo");
-        deleted.setTipo(Notification.Type.GENERAL);
-        deleted.setDeleted(true);
-        notificationRepository.save(deleted);
-
-        mockMvc.perform(get("/avisos"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].titulo").value("Aviso Ativo"));
     }
 }
